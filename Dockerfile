@@ -5,8 +5,6 @@ WORKDIR /app
 
 # Set build environment
 ENV PUBLIC_ADAPTER='docker-node'
-ENV VITE_ALLOWED_HOSTS='localhost'
-ENV PORT=4173
 
 # Copy package files first (for better layer caching)
 COPY package*.json ./
@@ -30,6 +28,7 @@ WORKDIR /app
 
 # Set runtime environment
 ENV PUBLIC_ADAPTER='docker-node'
+ENV PORT=4173
 
 # Copy only the built application from builder stage
 COPY --from=builder --chown=appuser:appgroup /app/build ./build
