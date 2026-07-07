@@ -2,6 +2,8 @@
 
 This is a privacy-hardened fork of [Hollama](https://github.com/fmaclen/hollama) with Fireworks AI support. It replaces the upstream browser-direct architecture with a server-side proxy so API keys never reach the browser.
 
+![Conversations organized in folders with multi-select, file context, and reasoning](screenshots/session-folders-multiselect.png)
+
 ## What changed
 
 | Concern | Upstream | This fork |

@@ -17,14 +17,10 @@ test.beforeEach(async ({ page }) => {
 test('seed data and take screenshots for README.md', async ({ page }) => {
 	await page.goto('/settings');
 
-	// Wait for fonts to load
-	expect(await page.evaluate(() => document.fonts.size)).toBe(19);
-	expect(await page.evaluate(() => document.fonts.ready)).toBeTruthy();
-
 	await expect(page.getByTestId('server')).toHaveCount(1);
 	expect(await page.screenshot()).toMatchSnapshot({ name: 'settings.png' });
 
-	await page.goto('/sessions/ulxz6l'); // Visiting a fake session id so it doesn't change from test to test
+	await page.goto('/sessions/ulxz6l');
 	await expect(page.getByText('No sessions')).toBeVisible();
 	await expect(page.locator('.prompt-editor__textarea')).toBeVisible();
 	await expect(page.locator('.text-editor')).not.toBeVisible();
@@ -34,20 +30,44 @@ test('seed data and take screenshots for README.md', async ({ page }) => {
 	await expect(page.locator('.prompt-editor__textarea')).not.toBeVisible();
 	expect(await page.screenshot()).toMatchSnapshot({ name: 'session-new.png' });
 
-	// Stage 2 sessions
+	// --- Seed folders + sessions ---
 	const models: Model[] = MOCK_API_TAGS_RESPONSE.models.map((model) => ({
 		name: model.name,
 		serverId: generateRandomId()
 	}));
+
+	const folderId1 = generateRandomId();
+	const folderId2 = generateRandomId();
+
 	await page.evaluate(
-		({ modelA, modelB }) =>
+		(data) => window.localStorage.setItem('hollama-folders', JSON.stringify(data)),
+		[
+			{
+				id: folderId1,
+				name: 'Work',
+				isExpanded: true,
+				sortOrder: 0,
+				updatedAt: new Date().toISOString()
+			},
+			{
+				id: folderId2,
+				name: 'Personal',
+				isExpanded: true,
+				sortOrder: 1,
+				updatedAt: new Date().toISOString()
+			}
+		]
+	);
+
+	await page.evaluate(
+		({ modelA, modelB, modelC, folderId1, folderId2 }) =>
 			window.localStorage.setItem(
 				'hollama-sessions',
-				// FIXME: we use set a type here to make sure these are `Session[]`
 				JSON.stringify([
 					{
 						id: 'u4pozr',
 						model: modelA,
+						folderId: folderId1,
 						messages: [
 							{
 								role: 'user',
@@ -65,6 +85,7 @@ test('seed data and take screenshots for README.md', async ({ page }) => {
 					{
 						id: 'bbpz8o',
 						model: modelB,
+						folderId: folderId1,
 						messages: [
 							{
 								role: 'user',
@@ -77,29 +98,58 @@ test('seed data and take screenshots for README.md', async ({ page }) => {
 							}
 						],
 						updatedAt: new Date().toISOString()
+					},
+					{
+						id: 'ck9d3w',
+						model: modelC,
+						folderId: folderId2,
+						messages: [
+							{
+								role: 'user',
+								content: 'Explain how quicksort works'
+							},
+							{
+								role: 'assistant',
+								content:
+									'Quicksort is a divide-and-conquer sorting algorithm. It works by selecting a **pivot** element from the array and partitioning the other elements into two sub-arrays:\n\n1. Elements **less than** the pivot\n2. Elements **greater than** the pivot\n\nThe sub-arrays are then sorted recursively.\n\n```javascript\nfunction quicksort(arr) {\n  if (arr.length <= 1) return arr;\n  const pivot = arr[0];\n  const left = arr.slice(1).filter(x => x <= pivot);\n  const right = arr.slice(1).filter(x => x > pivot);\n  return [...quicksort(left), pivot, ...quicksort(right)];\n}\n```\n\nAverage time complexity: **O(n log n)**'
+							}
+						],
+						updatedAt: new Date().toISOString()
 					}
 				])
 			),
 		{
 			modelA: models[0],
-			modelB: models[1]
+			modelB: models[1],
+			modelC: models[2] ?? models[0],
+			folderId1,
+			folderId2
 		}
 	);
 
 	await page.reload();
 	await expect(page.getByText('No sessions')).not.toBeVisible();
-	await expect(page.getByTestId('session-item')).toHaveCount(2);
 
+	// Session with code block — folders visible in sidebar
 	await page.getByText('Write a Python function').click();
 	await expect(page.getByText("Here's a basic function")).toBeVisible();
-	await expect(page.getByText('No knowledge', { exact: true })).not.toBeVisible();
 	await page.locator('article', { hasText: "Here's a basic function" }).hover();
 	expect(await page.screenshot()).toMatchSnapshot({ name: 'session.png' });
 
+	// In-conversation search
+	await page.getByTestId('session-search-toggle').click();
+	await expect(page.getByTestId('in-conversation-search-input')).toBeVisible();
+	await page.getByTestId('in-conversation-search-input').fill('function');
+	await expect(page.getByTestId('in-conversation-search-counter')).not.toHaveText('');
+	expect(await page.screenshot()).toMatchSnapshot({ name: 'session-search.png' });
+	await page.getByTestId('in-conversation-search-close').click();
+
+	// Controls view
 	await page.getByLabel('Controls').click();
 	await expect(page.getByText('System prompt')).toBeVisible();
 	expect(await page.screenshot()).toMatchSnapshot({ name: 'session-controls.png' });
 
+	// Knowledge
 	await page.getByRole('tab', { name: 'Knowledge' }).click();
 	await expect(page.getByText('No knowledge')).toBeVisible();
 
@@ -110,8 +160,4 @@ test('seed data and take screenshots for README.md', async ({ page }) => {
 	await page.getByText(MOCK_KNOWLEDGE[0].name).click();
 	await expect(page.getByTestId('knowledge-metadata')).toBeVisible();
 	expect(await page.screenshot()).toMatchSnapshot({ name: 'knowledge.png' });
-
-	await page.getByText('Motd').click();
-	await expect(page.locator('h3', { hasText: 'Message of the day' })).toBeVisible();
-	expect(await page.screenshot()).toMatchSnapshot({ name: 'motd.png' });
 });

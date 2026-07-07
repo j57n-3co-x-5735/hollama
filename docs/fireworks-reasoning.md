@@ -2,6 +2,8 @@
 
 Support for structured reasoning via `reasoning_effort` and `reasoning_content` fields, designed for Fireworks AI models that support thinking/reasoning (e.g., DeepSeek R1, QwQ).
 
+![Session with reasoning trace and per-session system prompt](screenshots/session-system-prompt.png)
+
 ## Features
 
 - **Reasoning effort toggle** — Sparkles button in the prompt toolbar for Fireworks endpoints
