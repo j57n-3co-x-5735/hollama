@@ -2,9 +2,16 @@ import type { BaseTranslation } from '../i18n-types';
 
 const en = {
 	addConnection: 'Add connection',
+	addHeader: 'Add header',
 	allowConnections: 'Change your server settings to allow connections from',
 	allowMixedContent: 'Allow mixed content',
 	apiKey: 'API key',
+	apiKeyOptionalHelp: "Leave blank for local servers (e.g. llama.cpp) that don't require a key",
+	apiKeyOptionalPlaceholder: "Optional — leave blank for local servers that don't require a key",
+	apiKeyPlaceholder: 'Enter API key (stored server-side)',
+	apiKeyRequired: 'API key is required',
+	apiKeyServerSideConfigured:
+		'Server-side API key configured via OPENAI_API_KEY environment variable.',
 	areYouSureYouWantToDeleteAllKnowledge: 'Are you sure you want to delete all knowledge?',
 	areYouSureYouWantToDeleteAllSessions: 'Are you sure you want to delete all sessions?',
 	areYouSureYouWantToDeleteAllPreferences: 'Are you sure you want to delete all preferences?',
@@ -38,9 +45,17 @@ const en = {
 	controlsOnlyAvailableForOllama:
 		'Advanced controls are currently only available for Ollama models',
 	copy: 'Copy',
+	copyOrExport: 'Copy or export conversation',
+	copyAsMarkdown: 'Copy as Markdown',
+	copyAsJson: 'Copy as JSON',
+	downloadMarkdown: 'Download .md',
 	couldntCheckForUpdates: "Couldn't check for updates automatically",
 	couldntConnectToOllamaServer: "Couldn't connect to Ollama server",
 	creatingTunnel: 'Creating a tunnel',
+	customHeaders: 'Custom headers',
+	customHeadersCorsWarning:
+		'Custom headers may cause CORS errors when connecting directly from the browser',
+	customHeadersHelp: 'Extra HTTP headers sent with every request to this server',
 	currentVersion: 'Current version',
 	dangerZone: 'Danger zone',
 	dark: 'Dark',
@@ -52,6 +67,7 @@ const en = {
 	dismiss: 'Dismiss',
 	downloadModel: 'Download model',
 	edit: 'Edit',
+	enableReasoning: 'Enable reasoning',
 	editTitle: 'Edit title',
 	emptyKnowledge: 'No knowledge',
 	emptySessions: 'No sessions',
@@ -63,6 +79,8 @@ const en = {
 	goToDownloads: 'Go to downloads',
 	goToKnowledge: 'Go to knowledge',
 	goToReleases: 'Go to releases',
+	headerName: 'Header name',
+	headerValue: 'Header value',
 	howToObtainOpenAIKey: 'How to obtain an API key from OpenAI?',
 	howToUpdateDocker: 'How to update Docker container?',
 	import: 'Import',
@@ -78,7 +96,7 @@ const en = {
 	light: 'Light',
 	lowVram: 'Low VRAM',
 	mainGpu: 'Main GPU',
-	messageOfTheDay: 'Message of the day',
+	messageOfTheDay: 'Getting started',
 	messages: 'Messages',
 	minP: 'Min P',
 	mirostat: 'Mirostat',
@@ -89,7 +107,7 @@ const en = {
 	modelWasDownloaded: '{model:string} was downloaded',
 	modelsFilter: 'Model names filter',
 	modelsFilterHelp: "Hides model names that don't start with the filter",
-	motd: 'Motd',
+	motd: 'Getting started',
 	name: 'Name',
 	newKnowledge: 'New knowledge',
 	newSession: 'New session',
@@ -110,6 +128,8 @@ const en = {
 	ollamaLibrary: "Ollama's library",
 	openAIOfficialAPI: 'OpenAI: Official API',
 	openAICompatible: 'OpenAI: Compatible servers (i.e. llama.cpp)',
+	lmStudio: 'LM Studio',
+	lmStudioBaseURLHelp: "Start the local server from LM Studio's Developer tab (default port 1234).",
 	otherModels: 'Other models',
 	penalizeNewline: 'Penalize newline',
 	preferences: 'Preferences',
@@ -121,8 +141,10 @@ const en = {
 	pullingModel: 'Pulling model',
 	random: 'Random',
 	reasoning: 'Reasoning',
+	reasoningNotSupported: 'This model may not support reasoning — responded without it',
 	refreshToUpdate: 'Refresh to update',
 	releaseHistory: 'Release history',
+	removeHeader: 'Remove header',
 	repeatLastN: 'Repeat last N',
 	repeatPenalty: 'Repeat penalty',
 	retry: 'Retry',
@@ -135,6 +157,10 @@ const en = {
 	seed: 'Seed',
 	seeDocs: 'See docs',
 	servers: 'Servers',
+	sessionAffinityKey: 'Session affinity key',
+	sessionAffinityKeyHelp:
+		'Sent as prompt_cache_key with each request. Providers like Fireworks AI use this to route requests to the same backend for prompt cache reuse.',
+	sessionAffinityKeyPlaceholder: 'e.g. hollama-session-1',
 	serverSettingsUpdated:
 		'Server configuration was updated and needs to be re-verified in "Settings"',
 	session: 'Session',
@@ -147,6 +173,14 @@ const en = {
 	success: 'Success',
 	system: 'System',
 	systemPrompt: 'System prompt',
+	systemPromptInstructions: 'System instructions',
+	systemPromptPlaceholder: 'Enter system prompt...',
+	globalSystemPrompt: 'Global System Prompt',
+	globalSystemPromptShort: 'System Prompt',
+	globalSystemPromptDescription: 'Applies to all sessions',
+	sessionSystemPrompt: 'Session system prompt',
+	systemPromptMultipleNote:
+		'When both global and session prompts are set, some models may prioritize the last system instruction',
 	temperature: 'Temperature',
 	tfsZ: 'TFS Z',
 	topK: 'Top K',
@@ -172,8 +206,66 @@ const en = {
 	preferencesDescription: 'Language, theme, recently used models, etc',
 	sessionsDescription: 'Entire session history, attachments and custom model settings',
 	knowledgeDescription: 'Entire knowledge base',
+	foldersDescription: 'Session folder organization',
+	filesDescription: 'File attachment references and directory selections',
+	areYouSureYouWantToDeleteAllFolders: 'Are you sure you want to delete all folders?',
+	areYouSureYouWantToDeleteAllFiles: 'Are you sure you want to delete all file references?',
 	expandSidebar: 'Expand sidebar',
-	collapseSidebar: 'Collapse sidebar'
+	collapseSidebar: 'Collapse sidebar',
+
+	// Folders
+	folders: 'Folders',
+	newFolder: 'New folder',
+	newFolderEllipsis: 'New folder...',
+	deleteFolder: 'Delete folder',
+	folderName: 'Folder name',
+	folderSessionCount: '{count:number} sessions',
+	moveToFolder: 'Move to folder',
+	removeFromFolder: 'Remove from folder',
+	unfiled: 'Unfiled',
+
+	// Storage capacity
+	storageFillingUp:
+		'Storage is filling up. Consider organizing sessions into folders or deleting old ones.',
+	storageNearlyFull:
+		'Storage nearly full — ~{used:string} of {total:string} used. Delete old sessions or archive conversations to continue.',
+	storageFull:
+		'Storage full (~{used:string} of {total:string}). Delete old sessions or reduce conversation length to continue.',
+
+	// List search
+	searchSessions: 'Search sessions',
+	clearSearch: 'Clear search',
+	noSessionsMatchSearch: 'No sessions match your search',
+
+	// Multi-select delete
+	selectSession: 'Select session',
+	selectAll: 'Select all',
+	deselectAll: 'Deselect all',
+	nSelected: '{count:number} selected',
+	cancelSelection: 'Cancel selection',
+	deleteNConversations: 'Delete {count:number} conversations',
+	areYouSureYouWantToDeleteNSessions:
+		'Are you sure you want to delete {count:number} conversations? This cannot be undone.',
+
+	// In-conversation search
+	searchInConversation: 'Search in conversation',
+	matchCounter: '{current:number} of {total:number} matches',
+	previousMatch: 'Previous match',
+	nextMatch: 'Next match',
+
+	// Files
+	files: 'Files',
+	browseFiles: 'Browse files',
+	openFolder: 'Open folder',
+	attachOnce: 'Attach once',
+	attachPersistently: 'Attach persistently',
+	noFilesConfigured: 'No directories are configured for file access',
+	failedToLoadDirectory: 'Failed to load directory',
+	removeFile: 'Remove file',
+	persistentFileIndicator: 'Attached to every message',
+	couldNotAttachFile: 'Could not attach {name:string}',
+	fileAttachedPersistently: '{name:string} attached to every message',
+	fileAttachedOnce: '{name:string} attached'
 } satisfies BaseTranslation;
 
 export default en;

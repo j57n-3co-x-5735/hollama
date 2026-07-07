@@ -6,7 +6,10 @@
 	import Button from '$lib/components/Button.svelte';
 	import Fieldset from '$lib/components/Fieldset.svelte';
 	import P from '$lib/components/P.svelte';
+	import { sanitizeHeaders, sanitizeImportedServer, type Server } from '$lib/connections';
 	import {
+		filesStore,
+		foldersStore,
 		knowledgeStore,
 		serversStore,
 		sessionsStore,
@@ -41,11 +44,49 @@
 			storageKey: StorageKey.HollamaKnowledge,
 			fileName: `hollama-knowledge.json`,
 			defaultValue: '[]'
+		},
+		{
+			storageKey: StorageKey.HollamaFolders,
+			fileName: `hollama-folders.json`,
+			defaultValue: '[]'
+		},
+		{
+			storageKey: StorageKey.HollamaFiles,
+			fileName: `hollama-files.json`,
+			defaultValue: '[]'
 		}
 	];
 
+	function stripCredentials(data: unknown): unknown {
+		if (!Array.isArray(data)) return data;
+		return data.map((item: Record<string, unknown>) => {
+			const cleaned = { ...item };
+			delete cleaned.apiKey;
+			return cleaned;
+		});
+	}
+
+	function sanitizeImportedServerList(data: unknown): Server[] {
+		if (!Array.isArray(data)) return [];
+		const valid: Server[] = [];
+		for (const item of data) {
+			try {
+				valid.push(sanitizeImportedServer(item));
+			} catch (err) {
+				// Drop the offending record but keep the rest. We log so the user
+				// can investigate malformed entries after the import succeeds.
+				console.warn('Discarded invalid server record on import:', err);
+			}
+		}
+		return valid;
+	}
+
 	function exportData(storageKey: StorageKey, fileName: string, defaultValue: string) {
-		const data = localStorage.getItem(storageKey) || defaultValue;
+		let data = localStorage.getItem(storageKey) || defaultValue;
+		if (storageKey === StorageKey.HollamaServers) {
+			const parsed = JSON.parse(data);
+			data = JSON.stringify(stripCredentials(parsed));
+		}
 		const blob = new Blob([data], { type: 'application/json' });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
@@ -70,7 +111,23 @@
 		const reader = new FileReader();
 		reader.onload = (e) => {
 			try {
-				const data = JSON.parse(e.target?.result as string);
+				let data = JSON.parse(e.target?.result as string);
+				if (storageKey === StorageKey.HollamaServers) {
+					// Two-stage validation: first sanitizeHeaders on extraHeaders,
+					// then strip apiKey (so it cannot survive import), and finally
+					// server field-level validation (connectionType / id / baseUrl /
+					// isVerified reset). A crafted export cannot produce a
+					// pre-verified connection to a malicious URL.
+					if (Array.isArray(data)) {
+						for (const s of data) {
+							if (s.extraHeaders) {
+								s.extraHeaders = sanitizeHeaders(s.extraHeaders);
+							}
+						}
+						data = stripCredentials(data);
+					}
+					data = sanitizeImportedServerList(data);
+				}
 				localStorage.setItem(storageKey, JSON.stringify(data));
 				switch (storageKey) {
 					case StorageKey.HollamaPreferences:
@@ -84,6 +141,12 @@
 						break;
 					case StorageKey.HollamaKnowledge:
 						$knowledgeStore = data;
+						break;
+					case StorageKey.HollamaFolders:
+						$foldersStore = data;
+						break;
+					case StorageKey.HollamaFiles:
+						$filesStore = data;
 						break;
 				}
 				toast.success($LL.importSuccess());
@@ -113,6 +176,12 @@
 			case StorageKey.HollamaKnowledge:
 				confirmDelete = $LL.areYouSureYouWantToDeleteAllKnowledge();
 				break;
+			case StorageKey.HollamaFolders:
+				confirmDelete = $LL.areYouSureYouWantToDeleteAllFolders();
+				break;
+			case StorageKey.HollamaFiles:
+				confirmDelete = $LL.areYouSureYouWantToDeleteAllFiles();
+				break;
 		}
 
 		if (confirm(confirmDelete)) {
@@ -126,9 +195,19 @@
 					break;
 				case StorageKey.HollamaSessions:
 					$sessionsStore = [];
+					// Empty folders with no sessions are confusing — sessions are the
+					// source of truth for folder membership, so clear folders too.
+					localStorage.removeItem(StorageKey.HollamaFolders);
+					$foldersStore = [];
 					break;
 				case StorageKey.HollamaKnowledge:
 					$knowledgeStore = [];
+					break;
+				case StorageKey.HollamaFolders:
+					$foldersStore = [];
+					break;
+				case StorageKey.HollamaFiles:
+					$filesStore = [];
 					break;
 			}
 			toast.info($LL.deleteSuccess());
@@ -167,6 +246,12 @@
 					{:else if dataSource.storageKey === StorageKey.HollamaKnowledge}
 						<P><strong>{$LL.knowledge()}</strong></P>
 						<span class="text-xs text-muted">{$LL.knowledgeDescription()}</span>
+					{:else if dataSource.storageKey === StorageKey.HollamaFolders}
+						<P><strong>{$LL.folders()}</strong></P>
+						<span class="text-xs text-muted">{$LL.foldersDescription()}</span>
+					{:else if dataSource.storageKey === StorageKey.HollamaFiles}
+						<P><strong>{$LL.files()}</strong></P>
+						<span class="text-xs text-muted">{$LL.filesDescription()}</span>
 					{/if}
 				</div>
 

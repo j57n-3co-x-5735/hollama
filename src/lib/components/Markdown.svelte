@@ -248,7 +248,15 @@
 	}
 
 	.markdown :global(pre > .copy-button) {
-		@apply absolute right-2 top-2 rounded-md bg-shade-1 opacity-0;
+		/* Visible by default (so touch / no-hover devices can copy code), hidden
+		   until hover only on hover-capable pointers — same pattern as the
+		   per-message copy buttons. Previously opacity:0 with no @media gate left
+		   it invisible on non-hover pointers since pre:hover never fires there. */
+		@apply absolute right-2 top-2 rounded-md bg-shade-1 opacity-100;
+
+		@media (hover: hover) {
+			@apply opacity-0;
+		}
 	}
 
 	.markdown :global(pre:hover > .copy-button) {

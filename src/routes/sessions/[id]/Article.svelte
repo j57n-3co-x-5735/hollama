@@ -92,7 +92,7 @@
 		</div>
 	</article>
 {:else}
-	<article class="article article--{message.role}">
+	<article class="article article--{message.role}" data-message-role={message.role}>
 		<nav class="article__nav">
 			<div data-testid="session-role" class="article__role">
 				<Badge>

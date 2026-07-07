@@ -92,6 +92,18 @@ const config = {
 				},
 				'.base-icon': {
 					'@apply w-4 h-4': {}
+				},
+				// Icon-button primitive for raw <button> elements (header actions,
+				// sidebar move-menu trigger, multi-select cancel). Mirrors the
+				// Button.svelte `icon` variant so these render with the same
+				// padding/colors as the Button-based icons beside them — without
+				// this the class was undefined, so those buttons had no padding
+				// and crowded their neighbors.
+				'.base-button': {
+					'@apply inline-flex items-center justify-center gap-2 rounded-md': {}
+				},
+				'.base-button--icon': {
+					'@apply px-2.5 py-2 text-muted hover:text-active': {}
 				}
 			});
 		},

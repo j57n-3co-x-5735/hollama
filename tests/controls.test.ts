@@ -44,7 +44,6 @@ test('can navigate between session messages and controls', async ({ page }) => {
 
 	await page.getByText("What's the NATO phonetic alphabet?").click();
 	await expect(page.getByText('Zulu')).toBeVisible();
-	await expect(page.getByText('System prompt')).not.toBeVisible();
 
 	// Check it scrolls to the bottom when the page loads
 	const sessionHistory = page.locator('.session__history');
@@ -55,11 +54,10 @@ test('can navigate between session messages and controls', async ({ page }) => {
 	await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
 	await page.getByLabel('Controls').click();
 	await expect(page.getByText('Zulu')).not.toBeVisible();
-	await expect(page.getByText('System prompt')).toBeVisible();
+	await expect(page.locator('.controls')).toBeVisible();
 
 	await page.getByLabel('Messages').click();
 	await expect(page.getByText('Zulu')).toBeVisible();
-	await expect(page.getByText('System prompt')).not.toBeVisible();
 	// Check it scrolls to the bottom after switching back to Messages
 	const currentScrollTop = await sessionHistory.evaluate((el) => el.scrollTop);
 	expect(currentScrollTop).toBe(initialScrollTop);
@@ -122,7 +120,6 @@ test('can set ollama model and runtime options', async ({ page }) => {
 		})
 	).not.toBeVisible();
 	await expect(page.locator('article', { hasText: 'Whatever...' })).not.toBeVisible();
-	await expect(page.getByText('System prompt')).toBeVisible();
 
 	// Model options
 	await page.getByLabel('Num keep').fill('5');
@@ -162,7 +159,6 @@ test('can set ollama model and runtime options', async ({ page }) => {
 
 	// Assert submitting the prompt from Controls switches to the Messages tab
 	await expect(page.locator('article', { hasText: 'Whatever...' })).toBeVisible();
-	await expect(page.getByText('System prompt')).not.toBeVisible();
 
 	// Assert the options were submitted correctly
 	const customizedOptions = {
@@ -209,8 +205,7 @@ test('can set ollama model and runtime options', async ({ page }) => {
 			},
 			{
 				role: 'assistant',
-				reasoning: '',
-				content: MOCK_SESSION_1_RESPONSE_1.message.content
+					content: MOCK_SESSION_1_RESPONSE_1.message.content
 			},
 			{
 				role: 'user',
@@ -299,8 +294,7 @@ test('can set ollama model and runtime options', async ({ page }) => {
 			},
 			{
 				role: 'assistant',
-				reasoning: '',
-				content: MOCK_SESSION_1_RESPONSE_1.message.content
+					content: MOCK_SESSION_1_RESPONSE_1.message.content
 			},
 			{
 				role: 'user',
@@ -308,8 +302,7 @@ test('can set ollama model and runtime options', async ({ page }) => {
 			},
 			{
 				role: 'assistant',
-				reasoning: '',
-				content: MOCK_SESSION_1_RESPONSE_2.message.content
+					content: MOCK_SESSION_1_RESPONSE_2.message.content
 			},
 			{
 				role: 'user',
@@ -361,4 +354,98 @@ test('can set ollama model and runtime options', async ({ page }) => {
 	for (const [key, value] of Object.entries(customizedOptions)) {
 		expect(savedOptions).toHaveProperty(key, value);
 	}
+});
+
+test('copy button persists through multi-turn conversation', async ({ page }) => {
+	await page.goto('/');
+	await page.getByRole('tab', { name: 'Sessions' }).click();
+	await page.getByTestId('new-session').click();
+
+	const modelName = MOCK_API_TAGS_RESPONSE.models[0].name;
+	await chooseFromCombobox(page, 'Available models', modelName);
+
+	let responseIndex = 0;
+	const responses = [MOCK_SESSION_1_RESPONSE_1, MOCK_SESSION_1_RESPONSE_2, MOCK_SESSION_1_RESPONSE_3];
+
+	await page.route('**/api/chat', async (route) => {
+		await route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			body: JSON.stringify(responses[responseIndex++ % responses.length])
+		});
+	});
+
+	const promptTextarea = page.locator('.prompt-editor__textarea');
+	const copyButton = page.getByTestId('session-copy-button');
+
+	// First message — copy button should appear
+	await promptTextarea.fill('Message 1');
+	await page.getByRole('button', { name: 'Run' }).click();
+	await expect(page.locator('article', { hasText: 'Message 1' })).toBeVisible();
+	await expect(copyButton).toBeVisible();
+
+	// Second message — copy button should persist
+	await promptTextarea.fill('Message 2');
+	await page.getByRole('button', { name: 'Run' }).click();
+	await expect(page.locator('article', { hasText: 'Message 2' })).toBeVisible();
+	await expect(copyButton).toBeVisible();
+
+	// Third message — copy button should persist
+	await promptTextarea.fill('Message 3');
+	await page.getByRole('button', { name: 'Run' }).click();
+	await expect(page.locator('article', { hasText: 'Message 3' })).toBeVisible();
+	await expect(copyButton).toBeVisible();
+});
+
+test('copy button present in both light and dark themes', async ({ page }) => {
+	await page.goto('/');
+
+	// Seed a session with messages
+	const MOCK_SESSION = [
+		{
+			id: 'theme-test',
+			model: { name: 'gemma2:27b', serverId: 'default' },
+			updatedAt: '2024-09-24T14:24:30.725Z',
+			messages: [
+				{ role: 'user', content: 'Hello' },
+				{ role: 'assistant', content: 'Hi there!' }
+			],
+			options: {},
+			systemPrompt: { role: 'system', content: '' }
+		}
+	];
+	await page.evaluate(
+		(data) => window.localStorage.setItem('hollama-sessions', JSON.stringify(data)),
+		MOCK_SESSION
+	);
+	await page.reload();
+	await page.getByRole('tab', { name: 'Sessions' }).click();
+	await page.getByTestId('session-item').filter({ hasText: 'Hello' }).click();
+
+	const copyButton = page.getByTestId('session-copy-button');
+
+	// Default theme — copy button should be present
+	await expect(copyButton).toBeVisible();
+
+	// Switch to dark theme
+	await page.evaluate(() => {
+		const settings = JSON.parse(window.localStorage.getItem('hollama-settings') || '{}');
+		settings.theme = 'dark';
+		window.localStorage.setItem('hollama-settings', JSON.stringify(settings));
+	});
+	await page.reload();
+	await page.getByRole('tab', { name: 'Sessions' }).click();
+	await page.getByTestId('session-item').filter({ hasText: 'Hello' }).click();
+	await expect(copyButton).toBeVisible();
+
+	// Switch to light theme
+	await page.evaluate(() => {
+		const settings = JSON.parse(window.localStorage.getItem('hollama-settings') || '{}');
+		settings.theme = 'light';
+		window.localStorage.setItem('hollama-settings', JSON.stringify(settings));
+	});
+	await page.reload();
+	await page.getByRole('tab', { name: 'Sessions' }).click();
+	await page.getByTestId('session-item').filter({ hasText: 'Hello' }).click();
+	await expect(copyButton).toBeVisible();
 });

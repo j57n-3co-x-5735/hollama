@@ -2,6 +2,8 @@ import { toast } from 'svelte-sonner';
 import { writable } from 'svelte/store';
 
 import { browser } from '$app/environment';
+import type { FileReference } from '$lib/files';
+import type { Folder } from '$lib/folders';
 import type { Session } from '$lib/sessions';
 
 import type { Server } from './connections';
@@ -64,7 +66,9 @@ export enum StorageKey {
 	HollamaPreferences = `${LOCAL_STORAGE_PREFIX}-settings`,
 	HollamaServers = `${LOCAL_STORAGE_PREFIX}-servers`,
 	HollamaSessions = `${LOCAL_STORAGE_PREFIX}-sessions`,
-	HollamaKnowledge = `${LOCAL_STORAGE_PREFIX}-knowledge`
+	HollamaKnowledge = `${LOCAL_STORAGE_PREFIX}-knowledge`,
+	HollamaFolders = `${LOCAL_STORAGE_PREFIX}-folders`,
+	HollamaFiles = `${LOCAL_STORAGE_PREFIX}-files`
 }
 
 export const settingsStore = createLocalStorageStore<Settings>(
@@ -74,3 +78,5 @@ export const settingsStore = createLocalStorageStore<Settings>(
 export const serversStore = createLocalStorageStore<Server[]>(StorageKey.HollamaServers, []);
 export const sessionsStore = createLocalStorageStore<Session[]>(StorageKey.HollamaSessions, []);
 export const knowledgeStore = createLocalStorageStore<Knowledge[]>(StorageKey.HollamaKnowledge, []);
+export const foldersStore = createLocalStorageStore<Folder[]>(StorageKey.HollamaFolders, []);
+export const filesStore = createLocalStorageStore<FileReference[]>(StorageKey.HollamaFiles, []);

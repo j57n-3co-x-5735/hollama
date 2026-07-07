@@ -8,13 +8,25 @@
 	import { type Knowledge } from '$lib/knowledge';
 	import { Sitemap } from '$lib/sitemap';
 
-	export let value: string | undefined = undefined;
-	export let options: Knowledge[] = [];
-	export let showNav: boolean = false;
-	export let showLabel: boolean = true;
-	export let allowClear: boolean = true;
-	export let onChange: ((knowledgeId: string) => void) | undefined = undefined;
-	export let fieldId: string = 'knowledge';
+	interface Props {
+		value?: string;
+		options?: Knowledge[];
+		showNav?: boolean;
+		showLabel?: boolean;
+		allowClear?: boolean;
+		onChange?: (knowledgeId: string) => void;
+		fieldId?: string;
+	}
+
+	let {
+		value = $bindable(undefined),
+		options = [],
+		showNav = false,
+		showLabel = true,
+		allowClear = true,
+		onChange = undefined,
+		fieldId = 'knowledge'
+	}: Props = $props();
 </script>
 
 <FieldSelect

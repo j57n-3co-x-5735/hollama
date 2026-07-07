@@ -26,6 +26,10 @@ type RootTranslation = {
 	 */
 	addConnection: string
 	/**
+	 * A​d​d​ ​h​e​a​d​e​r
+	 */
+	addHeader: string
+	/**
 	 * C​h​a​n​g​e​ ​y​o​u​r​ ​s​e​r​v​e​r​ ​s​e​t​t​i​n​g​s​ ​t​o​ ​a​l​l​o​w​ ​c​o​n​n​e​c​t​i​o​n​s​ ​f​r​o​m
 	 */
 	allowConnections: string
@@ -37,6 +41,26 @@ type RootTranslation = {
 	 * A​P​I​ ​k​e​y
 	 */
 	apiKey: string
+	/**
+	 * L​e​a​v​e​ ​b​l​a​n​k​ ​f​o​r​ ​l​o​c​a​l​ ​s​e​r​v​e​r​s​ ​(​e​.​g​.​ ​l​l​a​m​a​.​c​p​p​)​ ​t​h​a​t​ ​d​o​n​'​t​ ​r​e​q​u​i​r​e​ ​a​ ​k​e​y
+	 */
+	apiKeyOptionalHelp: string
+	/**
+	 * O​p​t​i​o​n​a​l​ ​—​ ​l​e​a​v​e​ ​b​l​a​n​k​ ​f​o​r​ ​l​o​c​a​l​ ​s​e​r​v​e​r​s​ ​t​h​a​t​ ​d​o​n​'​t​ ​r​e​q​u​i​r​e​ ​a​ ​k​e​y
+	 */
+	apiKeyOptionalPlaceholder: string
+	/**
+	 * E​n​t​e​r​ ​A​P​I​ ​k​e​y​ ​(​s​t​o​r​e​d​ ​s​e​r​v​e​r​-​s​i​d​e​)
+	 */
+	apiKeyPlaceholder: string
+	/**
+	 * A​P​I​ ​k​e​y​ ​i​s​ ​r​e​q​u​i​r​e​d
+	 */
+	apiKeyRequired: string
+	/**
+	 * S​e​r​v​e​r​-​s​i​d​e​ ​A​P​I​ ​k​e​y​ ​c​o​n​f​i​g​u​r​e​d​ ​v​i​a​ ​O​P​E​N​A​I​_​A​P​I​_​K​E​Y​ ​e​n​v​i​r​o​n​m​e​n​t​ ​v​a​r​i​a​b​l​e​.
+	 */
+	apiKeyServerSideConfigured: string
 	/**
 	 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​a​l​l​ ​k​n​o​w​l​e​d​g​e​?
 	 */
@@ -159,6 +183,22 @@ type RootTranslation = {
 	 */
 	copy: string
 	/**
+	 * C​o​p​y​ ​o​r​ ​e​x​p​o​r​t​ ​c​o​n​v​e​r​s​a​t​i​o​n
+	 */
+	copyOrExport: string
+	/**
+	 * C​o​p​y​ ​a​s​ ​M​a​r​k​d​o​w​n
+	 */
+	copyAsMarkdown: string
+	/**
+	 * C​o​p​y​ ​a​s​ ​J​S​O​N
+	 */
+	copyAsJson: string
+	/**
+	 * D​o​w​n​l​o​a​d​ ​.​m​d
+	 */
+	downloadMarkdown: string
+	/**
 	 * C​o​u​l​d​n​'​t​ ​c​h​e​c​k​ ​f​o​r​ ​u​p​d​a​t​e​s​ ​a​u​t​o​m​a​t​i​c​a​l​l​y
 	 */
 	couldntCheckForUpdates: string
@@ -170,6 +210,18 @@ type RootTranslation = {
 	 * C​r​e​a​t​i​n​g​ ​a​ ​t​u​n​n​e​l
 	 */
 	creatingTunnel: string
+	/**
+	 * C​u​s​t​o​m​ ​h​e​a​d​e​r​s
+	 */
+	customHeaders: string
+	/**
+	 * C​u​s​t​o​m​ ​h​e​a​d​e​r​s​ ​m​a​y​ ​c​a​u​s​e​ ​C​O​R​S​ ​e​r​r​o​r​s​ ​w​h​e​n​ ​c​o​n​n​e​c​t​i​n​g​ ​d​i​r​e​c​t​l​y​ ​f​r​o​m​ ​t​h​e​ ​b​r​o​w​s​e​r
+	 */
+	customHeadersCorsWarning: string
+	/**
+	 * E​x​t​r​a​ ​H​T​T​P​ ​h​e​a​d​e​r​s​ ​s​e​n​t​ ​w​i​t​h​ ​e​v​e​r​y​ ​r​e​q​u​e​s​t​ ​t​o​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 */
+	customHeadersHelp: string
 	/**
 	 * C​u​r​r​e​n​t​ ​v​e​r​s​i​o​n
 	 */
@@ -215,6 +267,10 @@ type RootTranslation = {
 	 */
 	edit: string
 	/**
+	 * E​n​a​b​l​e​ ​r​e​a​s​o​n​i​n​g
+	 */
+	enableReasoning: string
+	/**
 	 * E​d​i​t​ ​t​i​t​l​e
 	 */
 	editTitle: string
@@ -258,6 +314,14 @@ type RootTranslation = {
 	 * G​o​ ​t​o​ ​r​e​l​e​a​s​e​s
 	 */
 	goToReleases: string
+	/**
+	 * H​e​a​d​e​r​ ​n​a​m​e
+	 */
+	headerName: string
+	/**
+	 * H​e​a​d​e​r​ ​v​a​l​u​e
+	 */
+	headerValue: string
 	/**
 	 * H​o​w​ ​t​o​ ​o​b​t​a​i​n​ ​a​n​ ​A​P​I​ ​k​e​y​ ​f​r​o​m​ ​O​p​e​n​A​I​?
 	 */
@@ -448,6 +512,14 @@ type RootTranslation = {
 	 */
 	openAICompatible: string
 	/**
+	 * L​M​ ​S​t​u​d​i​o
+	 */
+	lmStudio: string
+	/**
+	 * S​t​a​r​t​ ​t​h​e​ ​l​o​c​a​l​ ​s​e​r​v​e​r​ ​f​r​o​m​ ​L​M​ ​S​t​u​d​i​o​'​s​ ​D​e​v​e​l​o​p​e​r​ ​t​a​b​ ​(​d​e​f​a​u​l​t​ ​p​o​r​t​ ​1​2​3​4​)​.
+	 */
+	lmStudioBaseURLHelp: string
+	/**
 	 * O​t​h​e​r​ ​m​o​d​e​l​s
 	 */
 	otherModels: string
@@ -492,6 +564,10 @@ type RootTranslation = {
 	 */
 	reasoning: string
 	/**
+	 * T​h​i​s​ ​m​o​d​e​l​ ​m​a​y​ ​n​o​t​ ​s​u​p​p​o​r​t​ ​r​e​a​s​o​n​i​n​g​ ​—​ ​r​e​s​p​o​n​d​e​d​ ​w​i​t​h​o​u​t​ ​i​t
+	 */
+	reasoningNotSupported: string
+	/**
 	 * R​e​f​r​e​s​h​ ​t​o​ ​u​p​d​a​t​e
 	 */
 	refreshToUpdate: string
@@ -499,6 +575,10 @@ type RootTranslation = {
 	 * R​e​l​e​a​s​e​ ​h​i​s​t​o​r​y
 	 */
 	releaseHistory: string
+	/**
+	 * R​e​m​o​v​e​ ​h​e​a​d​e​r
+	 */
+	removeHeader: string
 	/**
 	 * R​e​p​e​a​t​ ​l​a​s​t​ ​N
 	 */
@@ -548,6 +628,18 @@ type RootTranslation = {
 	 */
 	servers: string
 	/**
+	 * S​e​s​s​i​o​n​ ​a​f​f​i​n​i​t​y​ ​k​e​y
+	 */
+	sessionAffinityKey: string
+	/**
+	 * S​e​n​t​ ​a​s​ ​p​r​o​m​p​t​_​c​a​c​h​e​_​k​e​y​ ​w​i​t​h​ ​e​a​c​h​ ​r​e​q​u​e​s​t​.​ ​P​r​o​v​i​d​e​r​s​ ​l​i​k​e​ ​F​i​r​e​w​o​r​k​s​ ​A​I​ ​u​s​e​ ​t​h​i​s​ ​t​o​ ​r​o​u​t​e​ ​r​e​q​u​e​s​t​s​ ​t​o​ ​t​h​e​ ​s​a​m​e​ ​b​a​c​k​e​n​d​ ​f​o​r​ ​p​r​o​m​p​t​ ​c​a​c​h​e​ ​r​e​u​s​e​.
+	 */
+	sessionAffinityKeyHelp: string
+	/**
+	 * e​.​g​.​ ​h​o​l​l​a​m​a​-​s​e​s​s​i​o​n​-​1
+	 */
+	sessionAffinityKeyPlaceholder: string
+	/**
 	 * S​e​r​v​e​r​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​w​a​s​ ​u​p​d​a​t​e​d​ ​a​n​d​ ​n​e​e​d​s​ ​t​o​ ​b​e​ ​r​e​-​v​e​r​i​f​i​e​d​ ​i​n​ ​"​S​e​t​t​i​n​g​s​"
 	 */
 	serverSettingsUpdated: string
@@ -591,6 +683,34 @@ type RootTranslation = {
 	 * S​y​s​t​e​m​ ​p​r​o​m​p​t
 	 */
 	systemPrompt: string
+	/**
+	 * S​y​s​t​e​m​ ​i​n​s​t​r​u​c​t​i​o​n​s
+	 */
+	systemPromptInstructions: string
+	/**
+	 * E​n​t​e​r​ ​s​y​s​t​e​m​ ​p​r​o​m​p​t​.​.​.
+	 */
+	systemPromptPlaceholder: string
+	/**
+	 * G​l​o​b​a​l​ ​S​y​s​t​e​m​ ​P​r​o​m​p​t
+	 */
+	globalSystemPrompt: string
+	/**
+	 * S​y​s​t​e​m​ ​P​r​o​m​p​t
+	 */
+	globalSystemPromptShort: string
+	/**
+	 * A​p​p​l​i​e​s​ ​t​o​ ​a​l​l​ ​s​e​s​s​i​o​n​s
+	 */
+	globalSystemPromptDescription: string
+	/**
+	 * S​e​s​s​i​o​n​ ​s​y​s​t​e​m​ ​p​r​o​m​p​t
+	 */
+	sessionSystemPrompt: string
+	/**
+	 * W​h​e​n​ ​b​o​t​h​ ​g​l​o​b​a​l​ ​a​n​d​ ​s​e​s​s​i​o​n​ ​p​r​o​m​p​t​s​ ​a​r​e​ ​s​e​t​,​ ​s​o​m​e​ ​m​o​d​e​l​s​ ​m​a​y​ ​p​r​i​o​r​i​t​i​z​e​ ​t​h​e​ ​l​a​s​t​ ​s​y​s​t​e​m​ ​i​n​s​t​r​u​c​t​i​o​n
+	 */
+	systemPromptMultipleNote: string
 	/**
 	 * T​e​m​p​e​r​a​t​u​r​e
 	 */
@@ -690,6 +810,22 @@ type RootTranslation = {
 	 */
 	knowledgeDescription: string
 	/**
+	 * S​e​s​s​i​o​n​ ​f​o​l​d​e​r​ ​o​r​g​a​n​i​z​a​t​i​o​n
+	 */
+	foldersDescription: string
+	/**
+	 * F​i​l​e​ ​a​t​t​a​c​h​m​e​n​t​ ​r​e​f​e​r​e​n​c​e​s​ ​a​n​d​ ​d​i​r​e​c​t​o​r​y​ ​s​e​l​e​c​t​i​o​n​s
+	 */
+	filesDescription: string
+	/**
+	 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​a​l​l​ ​f​o​l​d​e​r​s​?
+	 */
+	areYouSureYouWantToDeleteAllFolders: string
+	/**
+	 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​a​l​l​ ​f​i​l​e​ ​r​e​f​e​r​e​n​c​e​s​?
+	 */
+	areYouSureYouWantToDeleteAllFiles: string
+	/**
 	 * E​x​p​a​n​d​ ​s​i​d​e​b​a​r
 	 */
 	expandSidebar: string
@@ -697,6 +833,171 @@ type RootTranslation = {
 	 * C​o​l​l​a​p​s​e​ ​s​i​d​e​b​a​r
 	 */
 	collapseSidebar: string
+	/**
+	 * F​o​l​d​e​r​s
+	 */
+	folders: string
+	/**
+	 * N​e​w​ ​f​o​l​d​e​r
+	 */
+	newFolder: string
+	/**
+	 * N​e​w​ ​f​o​l​d​e​r​.​.​.
+	 */
+	newFolderEllipsis: string
+	/**
+	 * D​e​l​e​t​e​ ​f​o​l​d​e​r
+	 */
+	deleteFolder: string
+	/**
+	 * F​o​l​d​e​r​ ​n​a​m​e
+	 */
+	folderName: string
+	/**
+	 * {​c​o​u​n​t​}​ ​s​e​s​s​i​o​n​s
+	 * @param {number} count
+	 */
+	folderSessionCount: RequiredParams<'count'>
+	/**
+	 * M​o​v​e​ ​t​o​ ​f​o​l​d​e​r
+	 */
+	moveToFolder: string
+	/**
+	 * R​e​m​o​v​e​ ​f​r​o​m​ ​f​o​l​d​e​r
+	 */
+	removeFromFolder: string
+	/**
+	 * U​n​f​i​l​e​d
+	 */
+	unfiled: string
+	/**
+	 * S​t​o​r​a​g​e​ ​i​s​ ​f​i​l​l​i​n​g​ ​u​p​.​ ​C​o​n​s​i​d​e​r​ ​o​r​g​a​n​i​z​i​n​g​ ​s​e​s​s​i​o​n​s​ ​i​n​t​o​ ​f​o​l​d​e​r​s​ ​o​r​ ​d​e​l​e​t​i​n​g​ ​o​l​d​ ​o​n​e​s​.
+	 */
+	storageFillingUp: string
+	/**
+	 * S​t​o​r​a​g​e​ ​n​e​a​r​l​y​ ​f​u​l​l​ ​—​ ​~​{​u​s​e​d​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​u​s​e​d​.​ ​D​e​l​e​t​e​ ​o​l​d​ ​s​e​s​s​i​o​n​s​ ​o​r​ ​a​r​c​h​i​v​e​ ​c​o​n​v​e​r​s​a​t​i​o​n​s​ ​t​o​ ​c​o​n​t​i​n​u​e​.
+	 * @param {string} total
+	 * @param {string} used
+	 */
+	storageNearlyFull: RequiredParams<'total' | 'used'>
+	/**
+	 * S​t​o​r​a​g​e​ ​f​u​l​l​ ​(​~​{​u​s​e​d​}​ ​o​f​ ​{​t​o​t​a​l​}​)​.​ ​D​e​l​e​t​e​ ​o​l​d​ ​s​e​s​s​i​o​n​s​ ​o​r​ ​r​e​d​u​c​e​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​l​e​n​g​t​h​ ​t​o​ ​c​o​n​t​i​n​u​e​.
+	 * @param {string} total
+	 * @param {string} used
+	 */
+	storageFull: RequiredParams<'total' | 'used'>
+	/**
+	 * S​e​a​r​c​h​ ​s​e​s​s​i​o​n​s
+	 */
+	searchSessions: string
+	/**
+	 * C​l​e​a​r​ ​s​e​a​r​c​h
+	 */
+	clearSearch: string
+	/**
+	 * N​o​ ​s​e​s​s​i​o​n​s​ ​m​a​t​c​h​ ​y​o​u​r​ ​s​e​a​r​c​h
+	 */
+	noSessionsMatchSearch: string
+	/**
+	 * S​e​l​e​c​t​ ​s​e​s​s​i​o​n
+	 */
+	selectSession: string
+	/**
+	 * S​e​l​e​c​t​ ​a​l​l
+	 */
+	selectAll: string
+	/**
+	 * D​e​s​e​l​e​c​t​ ​a​l​l
+	 */
+	deselectAll: string
+	/**
+	 * {​c​o​u​n​t​}​ ​s​e​l​e​c​t​e​d
+	 * @param {number} count
+	 */
+	nSelected: RequiredParams<'count'>
+	/**
+	 * C​a​n​c​e​l​ ​s​e​l​e​c​t​i​o​n
+	 */
+	cancelSelection: string
+	/**
+	 * D​e​l​e​t​e​ ​{​c​o​u​n​t​}​ ​c​o​n​v​e​r​s​a​t​i​o​n​s
+	 * @param {number} count
+	 */
+	deleteNConversations: RequiredParams<'count'>
+	/**
+	 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​{​c​o​u​n​t​}​ ​c​o​n​v​e​r​s​a​t​i​o​n​s​?​ ​T​h​i​s​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+	 * @param {number} count
+	 */
+	areYouSureYouWantToDeleteNSessions: RequiredParams<'count'>
+	/**
+	 * S​e​a​r​c​h​ ​i​n​ ​c​o​n​v​e​r​s​a​t​i​o​n
+	 */
+	searchInConversation: string
+	/**
+	 * {​c​u​r​r​e​n​t​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​m​a​t​c​h​e​s
+	 * @param {number} current
+	 * @param {number} total
+	 */
+	matchCounter: RequiredParams<'current' | 'total'>
+	/**
+	 * P​r​e​v​i​o​u​s​ ​m​a​t​c​h
+	 */
+	previousMatch: string
+	/**
+	 * N​e​x​t​ ​m​a​t​c​h
+	 */
+	nextMatch: string
+	/**
+	 * F​i​l​e​s
+	 */
+	files: string
+	/**
+	 * B​r​o​w​s​e​ ​f​i​l​e​s
+	 */
+	browseFiles: string
+	/**
+	 * O​p​e​n​ ​f​o​l​d​e​r
+	 */
+	openFolder: string
+	/**
+	 * A​t​t​a​c​h​ ​o​n​c​e
+	 */
+	attachOnce: string
+	/**
+	 * A​t​t​a​c​h​ ​p​e​r​s​i​s​t​e​n​t​l​y
+	 */
+	attachPersistently: string
+	/**
+	 * N​o​ ​d​i​r​e​c​t​o​r​i​e​s​ ​a​r​e​ ​c​o​n​f​i​g​u​r​e​d​ ​f​o​r​ ​f​i​l​e​ ​a​c​c​e​s​s
+	 */
+	noFilesConfigured: string
+	/**
+	 * F​a​i​l​e​d​ ​t​o​ ​l​o​a​d​ ​d​i​r​e​c​t​o​r​y
+	 */
+	failedToLoadDirectory: string
+	/**
+	 * R​e​m​o​v​e​ ​f​i​l​e
+	 */
+	removeFile: string
+	/**
+	 * A​t​t​a​c​h​e​d​ ​t​o​ ​e​v​e​r​y​ ​m​e​s​s​a​g​e
+	 */
+	persistentFileIndicator: string
+	/**
+	 * C​o​u​l​d​ ​n​o​t​ ​a​t​t​a​c​h​ ​{​n​a​m​e​}
+	 * @param {string} name
+	 */
+	couldNotAttachFile: RequiredParams<'name'>
+	/**
+	 * {​n​a​m​e​}​ ​a​t​t​a​c​h​e​d​ ​t​o​ ​e​v​e​r​y​ ​m​e​s​s​a​g​e
+	 * @param {string} name
+	 */
+	fileAttachedPersistently: RequiredParams<'name'>
+	/**
+	 * {​n​a​m​e​}​ ​a​t​t​a​c​h​e​d
+	 * @param {string} name
+	 */
+	fileAttachedOnce: RequiredParams<'name'>
 }
 
 export type TranslationFunctions = {
@@ -704,6 +1005,10 @@ export type TranslationFunctions = {
 	 * Add connection
 	 */
 	addConnection: () => LocalizedString
+	/**
+	 * Add header
+	 */
+	addHeader: () => LocalizedString
 	/**
 	 * Change your server settings to allow connections from
 	 */
@@ -716,6 +1021,26 @@ export type TranslationFunctions = {
 	 * API key
 	 */
 	apiKey: () => LocalizedString
+	/**
+	 * Leave blank for local servers (e.g. llama.cpp) that don't require a key
+	 */
+	apiKeyOptionalHelp: () => LocalizedString
+	/**
+	 * Optional — leave blank for local servers that don't require a key
+	 */
+	apiKeyOptionalPlaceholder: () => LocalizedString
+	/**
+	 * Enter API key (stored server-side)
+	 */
+	apiKeyPlaceholder: () => LocalizedString
+	/**
+	 * API key is required
+	 */
+	apiKeyRequired: () => LocalizedString
+	/**
+	 * Server-side API key configured via OPENAI_API_KEY environment variable.
+	 */
+	apiKeyServerSideConfigured: () => LocalizedString
 	/**
 	 * Are you sure you want to delete all knowledge?
 	 */
@@ -838,6 +1163,22 @@ The completion in progress will stop
 	 */
 	copy: () => LocalizedString
 	/**
+	 * Copy or export conversation
+	 */
+	copyOrExport: () => LocalizedString
+	/**
+	 * Copy as Markdown
+	 */
+	copyAsMarkdown: () => LocalizedString
+	/**
+	 * Copy as JSON
+	 */
+	copyAsJson: () => LocalizedString
+	/**
+	 * Download .md
+	 */
+	downloadMarkdown: () => LocalizedString
+	/**
 	 * Couldn't check for updates automatically
 	 */
 	couldntCheckForUpdates: () => LocalizedString
@@ -849,6 +1190,18 @@ The completion in progress will stop
 	 * Creating a tunnel
 	 */
 	creatingTunnel: () => LocalizedString
+	/**
+	 * Custom headers
+	 */
+	customHeaders: () => LocalizedString
+	/**
+	 * Custom headers may cause CORS errors when connecting directly from the browser
+	 */
+	customHeadersCorsWarning: () => LocalizedString
+	/**
+	 * Extra HTTP headers sent with every request to this server
+	 */
+	customHeadersHelp: () => LocalizedString
 	/**
 	 * Current version
 	 */
@@ -894,6 +1247,10 @@ The completion in progress will stop
 	 */
 	edit: () => LocalizedString
 	/**
+	 * Enable reasoning
+	 */
+	enableReasoning: () => LocalizedString
+	/**
 	 * Edit title
 	 */
 	editTitle: () => LocalizedString
@@ -937,6 +1294,14 @@ The completion in progress will stop
 	 * Go to releases
 	 */
 	goToReleases: () => LocalizedString
+	/**
+	 * Header name
+	 */
+	headerName: () => LocalizedString
+	/**
+	 * Header value
+	 */
+	headerValue: () => LocalizedString
 	/**
 	 * How to obtain an API key from OpenAI?
 	 */
@@ -1126,6 +1491,14 @@ The completion in progress will stop
 	 */
 	openAICompatible: () => LocalizedString
 	/**
+	 * LM Studio
+	 */
+	lmStudio: () => LocalizedString
+	/**
+	 * Start the local server from LM Studio's Developer tab (default port 1234).
+	 */
+	lmStudioBaseURLHelp: () => LocalizedString
+	/**
 	 * Other models
 	 */
 	otherModels: () => LocalizedString
@@ -1170,6 +1543,10 @@ The completion in progress will stop
 	 */
 	reasoning: () => LocalizedString
 	/**
+	 * This model may not support reasoning — responded without it
+	 */
+	reasoningNotSupported: () => LocalizedString
+	/**
 	 * Refresh to update
 	 */
 	refreshToUpdate: () => LocalizedString
@@ -1177,6 +1554,10 @@ The completion in progress will stop
 	 * Release history
 	 */
 	releaseHistory: () => LocalizedString
+	/**
+	 * Remove header
+	 */
+	removeHeader: () => LocalizedString
 	/**
 	 * Repeat last N
 	 */
@@ -1226,6 +1607,18 @@ The completion in progress will stop
 	 */
 	servers: () => LocalizedString
 	/**
+	 * Session affinity key
+	 */
+	sessionAffinityKey: () => LocalizedString
+	/**
+	 * Sent as prompt_cache_key with each request. Providers like Fireworks AI use this to route requests to the same backend for prompt cache reuse.
+	 */
+	sessionAffinityKeyHelp: () => LocalizedString
+	/**
+	 * e.g. hollama-session-1
+	 */
+	sessionAffinityKeyPlaceholder: () => LocalizedString
+	/**
 	 * Server configuration was updated and needs to be re-verified in "Settings"
 	 */
 	serverSettingsUpdated: () => LocalizedString
@@ -1269,6 +1662,34 @@ The completion in progress will stop
 	 * System prompt
 	 */
 	systemPrompt: () => LocalizedString
+	/**
+	 * System instructions
+	 */
+	systemPromptInstructions: () => LocalizedString
+	/**
+	 * Enter system prompt...
+	 */
+	systemPromptPlaceholder: () => LocalizedString
+	/**
+	 * Global System Prompt
+	 */
+	globalSystemPrompt: () => LocalizedString
+	/**
+	 * System Prompt
+	 */
+	globalSystemPromptShort: () => LocalizedString
+	/**
+	 * Applies to all sessions
+	 */
+	globalSystemPromptDescription: () => LocalizedString
+	/**
+	 * Session system prompt
+	 */
+	sessionSystemPrompt: () => LocalizedString
+	/**
+	 * When both global and session prompts are set, some models may prioritize the last system instruction
+	 */
+	systemPromptMultipleNote: () => LocalizedString
 	/**
 	 * Temperature
 	 */
@@ -1366,6 +1787,22 @@ The completion in progress will stop
 	 */
 	knowledgeDescription: () => LocalizedString
 	/**
+	 * Session folder organization
+	 */
+	foldersDescription: () => LocalizedString
+	/**
+	 * File attachment references and directory selections
+	 */
+	filesDescription: () => LocalizedString
+	/**
+	 * Are you sure you want to delete all folders?
+	 */
+	areYouSureYouWantToDeleteAllFolders: () => LocalizedString
+	/**
+	 * Are you sure you want to delete all file references?
+	 */
+	areYouSureYouWantToDeleteAllFiles: () => LocalizedString
+	/**
 	 * Expand sidebar
 	 */
 	expandSidebar: () => LocalizedString
@@ -1373,6 +1810,158 @@ The completion in progress will stop
 	 * Collapse sidebar
 	 */
 	collapseSidebar: () => LocalizedString
+	/**
+	 * Folders
+	 */
+	folders: () => LocalizedString
+	/**
+	 * New folder
+	 */
+	newFolder: () => LocalizedString
+	/**
+	 * New folder...
+	 */
+	newFolderEllipsis: () => LocalizedString
+	/**
+	 * Delete folder
+	 */
+	deleteFolder: () => LocalizedString
+	/**
+	 * Folder name
+	 */
+	folderName: () => LocalizedString
+	/**
+	 * {count} sessions
+	 */
+	folderSessionCount: (arg: { count: number }) => LocalizedString
+	/**
+	 * Move to folder
+	 */
+	moveToFolder: () => LocalizedString
+	/**
+	 * Remove from folder
+	 */
+	removeFromFolder: () => LocalizedString
+	/**
+	 * Unfiled
+	 */
+	unfiled: () => LocalizedString
+	/**
+	 * Storage is filling up. Consider organizing sessions into folders or deleting old ones.
+	 */
+	storageFillingUp: () => LocalizedString
+	/**
+	 * Storage nearly full — ~{used} of {total} used. Delete old sessions or archive conversations to continue.
+	 */
+	storageNearlyFull: (arg: { total: string, used: string }) => LocalizedString
+	/**
+	 * Storage full (~{used} of {total}). Delete old sessions or reduce conversation length to continue.
+	 */
+	storageFull: (arg: { total: string, used: string }) => LocalizedString
+	/**
+	 * Search sessions
+	 */
+	searchSessions: () => LocalizedString
+	/**
+	 * Clear search
+	 */
+	clearSearch: () => LocalizedString
+	/**
+	 * No sessions match your search
+	 */
+	noSessionsMatchSearch: () => LocalizedString
+	/**
+	 * Select session
+	 */
+	selectSession: () => LocalizedString
+	/**
+	 * Select all
+	 */
+	selectAll: () => LocalizedString
+	/**
+	 * Deselect all
+	 */
+	deselectAll: () => LocalizedString
+	/**
+	 * {count} selected
+	 */
+	nSelected: (arg: { count: number }) => LocalizedString
+	/**
+	 * Cancel selection
+	 */
+	cancelSelection: () => LocalizedString
+	/**
+	 * Delete {count} conversations
+	 */
+	deleteNConversations: (arg: { count: number }) => LocalizedString
+	/**
+	 * Are you sure you want to delete {count} conversations? This cannot be undone.
+	 */
+	areYouSureYouWantToDeleteNSessions: (arg: { count: number }) => LocalizedString
+	/**
+	 * Search in conversation
+	 */
+	searchInConversation: () => LocalizedString
+	/**
+	 * {current} of {total} matches
+	 */
+	matchCounter: (arg: { current: number, total: number }) => LocalizedString
+	/**
+	 * Previous match
+	 */
+	previousMatch: () => LocalizedString
+	/**
+	 * Next match
+	 */
+	nextMatch: () => LocalizedString
+	/**
+	 * Files
+	 */
+	files: () => LocalizedString
+	/**
+	 * Browse files
+	 */
+	browseFiles: () => LocalizedString
+	/**
+	 * Open folder
+	 */
+	openFolder: () => LocalizedString
+	/**
+	 * Attach once
+	 */
+	attachOnce: () => LocalizedString
+	/**
+	 * Attach persistently
+	 */
+	attachPersistently: () => LocalizedString
+	/**
+	 * No directories are configured for file access
+	 */
+	noFilesConfigured: () => LocalizedString
+	/**
+	 * Failed to load directory
+	 */
+	failedToLoadDirectory: () => LocalizedString
+	/**
+	 * Remove file
+	 */
+	removeFile: () => LocalizedString
+	/**
+	 * Attached to every message
+	 */
+	persistentFileIndicator: () => LocalizedString
+	/**
+	 * Could not attach {name}
+	 */
+	couldNotAttachFile: (arg: { name: string }) => LocalizedString
+	/**
+	 * {name} attached to every message
+	 */
+	fileAttachedPersistently: (arg: { name: string }) => LocalizedString
+	/**
+	 * {name} attached
+	 */
+	fileAttachedOnce: (arg: { name: string }) => LocalizedString
 }
 
 export type Formatters = {}

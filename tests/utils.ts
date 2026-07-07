@@ -1,9 +1,27 @@
 import { expect, type Locator, type Page, type Route } from '@playwright/test';
 import type { ChatResponse, ListResponse } from 'ollama/browser';
-import type OpenAI from 'openai';
 
 import { ConnectionType, getDefaultServer } from '$lib/connections';
 import type { Knowledge } from '$lib/knowledge';
+
+interface ChatCompletionChunk {
+	model: string;
+	created: number;
+	id: string;
+	object: string;
+	choices: Array<{
+		index: number;
+		delta: { role?: string; content?: string };
+		finish_reason: string | null;
+	}>;
+}
+
+export interface ModelObject {
+	id: string;
+	object: string;
+	created: number;
+	owned_by: string;
+}
 
 export const MOCK_API_TAGS_RESPONSE: ListResponse = {
 	models: [
@@ -187,7 +205,7 @@ export const MOCK_STREAMED_THOUGHT_TAGS = [
 	'This is outside a tag'
 ];
 
-export const MOCK_OPENAI_COMPLETION_RESPONSE_1: OpenAI.Chat.Completions.ChatCompletionChunk = {
+export const MOCK_OPENAI_COMPLETION_RESPONSE_1: ChatCompletionChunk = {
 	model: 'gpt-3.5-turbo',
 	created: 1677610602,
 	id: 'chatcmpl-78901234567890123456789012345678',
@@ -201,7 +219,7 @@ export const MOCK_OPENAI_COMPLETION_RESPONSE_1: OpenAI.Chat.Completions.ChatComp
 	]
 };
 
-export const MOCK_OPENAI_MODELS: OpenAI.Models.Model[] = [
+export const MOCK_OPENAI_MODELS: ModelObject[] = [
 	{ id: 'gpt-3.5-turbo', object: 'model', created: 1677610602, owned_by: 'openai' },
 	{ id: 'gpt-4', object: 'model', created: 1687882411, owned_by: 'openai' },
 	{ id: 'text-davinci-003', object: 'model', created: 1669599635, owned_by: 'openai-internal' }
@@ -297,11 +315,17 @@ export async function setupStreamedCompletionMock(
 	let interval: NodeJS.Timeout | null = null;
 
 	const server = http.createServer((req, res) => {
-		// Set CORS headers
+		// Set CORS headers. Declare the actual headers hollama's client
+		// code sends rather than using a wildcard, so the mock faithfully
+		// reflects production behavior:
+		//  - Content-Type    (JSON bodies via fetch)
+		//  - X-Api-Key       (per-request header-supplied auth)
+		//  - Accept          (browser default; harmless to declare)
+		//  - Authorization   (defensive: SvelteKit preflight echoes it)
 		const corsHeaders = {
 			'Access-Control-Allow-Origin': '*',
 			'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-			'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+			'Access-Control-Allow-Headers': 'Content-Type, X-Api-Key, Accept, Authorization',
 			'Access-Control-Max-Age': '3600'
 		};
 
@@ -406,23 +430,28 @@ export async function setupStreamedCompletionMock(
 
 // OpenAI mock functions
 
-export async function mockOpenAIModelsResponse(page: Page, models: OpenAI.Models.Model[]) {
+export async function mockOpenAIModelsResponse(page: Page, models: ModelObject[]) {
 	await page.goto('/settings');
 	await chooseFromCombobox(page, 'Connection type', 'OpenAI: Official API');
 	await page.getByText('Add connection').click();
 	await page.getByLabel('API Key').fill('sk-validapikey');
-	await page.route('https://api.openai.com/v1/models', async (route: Route) => {
+
+	await page.route('**/api/keys', async (route: Route) => {
+		await route.fulfill({ json: { ok: true } });
+	});
+	await page.route('**/api/models**', async (route: Route) => {
 		await route.fulfill({ json: { data: models } });
 	});
+
 	await page.getByRole('button', { name: 'Verify', exact: true }).click();
 	await expect(page.getByText('Connection has been verified and is ready to use')).toBeVisible();
 }
 
 export async function mockOpenAICompletionResponse(
 	page: Page,
-	responseChunks: OpenAI.Chat.Completions.ChatCompletionChunk
+	responseChunks: ChatCompletionChunk
 ) {
-	await page.route('**/v1/chat/completions', async (route: Route) => {
+	await page.route('**/api/chat', async (route: Route) => {
 		const encoder = new TextEncoder();
 		const chunks = encoder.encode(`data: ${JSON.stringify(responseChunks)}\n\n`);
 		const buffer = Buffer.from(chunks);
@@ -433,6 +462,27 @@ export async function mockOpenAICompletionResponse(
 			body: buffer
 		});
 	});
+}
+
+export async function mockOpenAICompletionResponseWithCapture(
+	page: Page,
+	responseChunks: ChatCompletionChunk
+): Promise<() => Record<string, unknown> | null> {
+	let capturedBody: Record<string, unknown> | null = null;
+
+	await page.route('**/api/chat', async (route: Route) => {
+		capturedBody = route.request().postDataJSON();
+		const encoder = new TextEncoder();
+		const chunks = encoder.encode(`data: ${JSON.stringify(responseChunks)}\n\n`);
+		const buffer = Buffer.from(chunks);
+		await route.fulfill({
+			status: 200,
+			contentType: 'text/event-stream;charset=UTF-8',
+			body: buffer
+		});
+	});
+
+	return () => capturedBody;
 }
 
 // Knowledge mock functions
