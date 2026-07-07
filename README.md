@@ -1,77 +1,90 @@
-# Hollama
+# Hollama-ULTIMATE
 
-A private chat app for large language models. Talks directly to models running on your own machine (Ollama, LM Studio) and to hosted APIs (OpenAI, Fireworks, and any OpenAI-compatible endpoint). Conversations are stored locally — they are only ever sent to the model provider you choose.
+A feature-packed, privacy-first chat app for large language models. Connect to Ollama, LM Studio, OpenAI, Fireworks, or any OpenAI-compatible endpoint — all from one interface with folders, search, file attachments, reasoning support, and a full security model that keeps your keys off the browser.
 
-This is a privacy-hardened fork of [Hollama](https://github.com/fmaclen/hollama). API keys never reach the browser — all upstream calls go through a server-side proxy with credential isolation, SSRF protection, and a strict Content Security Policy.
-
-### Get started
-
-- Download for [macOS, Windows & Linux](https://github.com/fmaclen/hollama/releases)
-- [Self-hosting](SELF_HOSTING.md) with Docker
-- [Quickstart](docs/quickstart.md) — build, run, configure
-- [Architecture & docs](docs/overview.md)
-
----
+Built on [Hollama](https://github.com/fmaclen/hollama) and extended with 16,000+ lines of new features, tests, and hardening.
 
 |  |  |
 | --- | --- |
 | ![Conversations with folders, multi-select, file context, and reasoning](docs/screenshots/session-folders-multiselect.png) | ![In-conversation search with match highlighting](docs/screenshots/session-search.png) |
-| Organize conversations into **folders**. **Multi-select** for batch operations. File attachments inject context directly into the conversation. Responses include collapsible **reasoning** traces. | Search within a conversation with **Ctrl+F** — matches are highlighted across all messages with prev/next navigation. |
 | ![Multi-provider model picker showing Fireworks and LM Studio](docs/screenshots/session-model-picker.png) | ![Built-in getting started guide](docs/screenshots/getting-started.png) |
-| Switch between models from **multiple providers** in one picker — Ollama, LM Studio, Fireworks, and OpenAI side by side, each labeled by connection. | A built-in **Getting Started** guide walks through connecting a provider, choosing a model, and using every feature. |
-| ![Fireworks config with session affinity and custom headers](docs/screenshots/settings-fireworks.png) | ![Knowledge base and global system prompt](docs/screenshots/knowledge-system-prompt.png) |
-| Configure **Fireworks AI** with session affinity keys for prompt caching, API keys stored server-side, and custom headers per connection. | Store reusable context in the **knowledge base**. Set a **global system prompt** that applies to every session, or override per-session. |
 
 ---
 
-### Features
+### What's new over upstream Hollama
 
-**Providers & models**
-- Ollama, LM Studio, OpenAI, Fireworks, and any OpenAI-compatible server
-- Multi-server support — connect to several providers at once
-- Text & vision models
-- Reasoning model support across all providers (`reasoning_effort` + `reasoning_content` parsing)
+This isn't a patch — it's a ground-up expansion. Upstream Hollama supports Ollama and OpenAI with browser-direct API calls. This fork adds:
+
+**5 provider types, one unified picker**
+- Ollama, LM Studio, OpenAI, Fireworks, and any OpenAI-compatible server (vLLM, llama.cpp, etc.)
+- Connect multiple servers at once — models from every provider appear in a single picker, labeled by connection
+- Reasoning model support across all providers with collapsible reasoning traces
 - Session affinity keys for Fireworks prompt cache reuse
 
-**Conversations**
-- Folder organization with drag-to-move and inline rename
-- In-conversation search (Ctrl/Cmd+F) with match highlighting and navigation
-- File attachments with configurable source directories
-- Conversation copy & export (Markdown, JSON, `.md` download)
-- Per-session and global system prompts
-- Edit & retry messages
-- Multi-select batch delete
-- Large prompt field with code editor toggle
+**Folder organization**
+- Create folders, rename them inline, drag conversations between them
+- Sidebar search filters across all folders with folder badges on results
+- Multi-select with checkboxes for batch delete
 
-**Interface**
-- Markdown rendering with syntax highlighting
-- KaTeX math notation
-- Sidebar search across all conversations
-- Byte-based storage cap with usage warnings
-- Light & dark themes
-- Responsive layout
-- Multi-language interface (EN, DE, ES, FR, JA, PT-BR, TR, VI, ZH-CN)
+**In-conversation search**
+- Ctrl/Cmd+F opens a search bar scoped to the current conversation
+- Matches highlighted across all messages with prev/next navigation
+
+**File attachments**
+- Attach files from configurable source directories — content is injected as context
+- File picker with directory browsing, configurable from Settings or environment variable
+
+**System prompts**
+- Global system prompt that applies to every session
+- Per-session system prompt override — set instructions for a single conversation
+- Both work together: the model receives global first, then session-specific
+
+**Conversation export**
+- Copy as Markdown, copy as JSON, or download as `.md`
+- Copy individual messages or entire sessions
 
 **Privacy & security**
-- Server-side API proxy — keys never reach the browser
-- Credential isolation (`.hollama/credentials.json`, mode `0600`)
-- SSRF protection — blocks private IPs, cloud metadata, loopback
-- Strict CSP — no inline scripts, no outbound telemetry
-- No analytics, no update checks
-- Import & export stored data
+- Server-side API proxy — API keys never reach the browser
+- Credential isolation in `.hollama/credentials.json` (mode `0600`)
+- SSRF protection — blocks private IPs, cloud metadata, loopback, IPv4-mapped IPv6
+- Strict CSP — no inline scripts, no outbound telemetry, no analytics, no update checks
+- Custom headers per connection, stored server-side with a reserved-header blocklist
+- Origin checking on all proxy routes
 
 **Desktop**
 - Electron builds for macOS, Windows, and Linux
-- CORS bypass via `onHeadersReceived` interceptor (no `webSecurity: false`)
+- Secure CORS bypass via `onHeadersReceived` interceptor (no `webSecurity: false`)
+
+**Everything else**
+- Large prompt field with code editor toggle
+- Markdown rendering with syntax highlighting
+- KaTeX math notation
+- Edit & retry messages
+- Byte-based storage cap with usage warnings
+- Light & dark themes
+- Responsive layout
+- 9 languages (EN, DE, ES, FR, JA, PT-BR, TR, VI, ZH-CN)
 - Download Ollama models directly from the UI
+- Built-in Getting Started guide
+- Import & export all stored data
+
+---
+
+### Get started
+
+- [Quickstart](docs/quickstart.md) — build, run, configure
+- [Architecture & docs](docs/overview.md)
+- [Self-hosting](SELF_HOSTING.md) with Docker
 
 ---
 
 ### More screenshots
 
-| | |
+|  |  |
 | --- | --- |
+| ![Fireworks config with session affinity and custom headers](docs/screenshots/settings-fireworks.png) | ![Knowledge base and global system prompt](docs/screenshots/knowledge-system-prompt.png) |
+| Fireworks AI config with session affinity keys for prompt caching, API keys stored server-side, and custom headers per connection. | Knowledge base for reusable context. Global system prompt applies to every session. |
 | ![Per-session system prompt with reasoning](docs/screenshots/session-system-prompt.png) | ![Sidebar search filtering conversations](docs/screenshots/sidebar-search.png) |
-| Per-session system prompt panel — set instructions for a single conversation without affecting others. | Search the sidebar to filter conversations across all folders. |
+| Per-session system prompt — set instructions for one conversation without affecting others. Reasoning traces are collapsible. | Sidebar search filters conversations across all folders. |
 | ![Folder creation with inline rename](docs/screenshots/sidebar-folder-create.png) | ![LM Studio connection and file source config](docs/screenshots/settings-lmstudio-files.png) |
-| Create folders inline and rename them in place. Multi-select sessions with checkboxes for batch operations. | LM Studio connection setup. The **Files** section lets you configure which directories the file picker reads from. |
+| Create folders inline, rename in place. Multi-select sessions with checkboxes for batch operations. | LM Studio connection setup. The Files section configures which directories the file picker reads from. |
