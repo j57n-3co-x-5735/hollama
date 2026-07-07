@@ -164,10 +164,9 @@ test.describe('Sidebar on desktop', () => {
 			.click();
 		await expect(page).toHaveURL('/settings');
 
-		// Test GitHub link (should open in new tab)
-		const githubLink = page.getByRole('link', { name: 'GitHub' });
-		await expect(githubLink).toHaveAttribute('target', '_blank');
-		await expect(githubLink).toHaveAttribute('href', 'https://github.com/fmaclen/hollama');
+		// NOTE: the upstream GitHub link was intentionally removed from the
+		// sidebar in this privacy fork (SidebarBottomNav has only MOTD, Settings,
+		// System-prompt, and the theme toggle), so it is no longer asserted here.
 	});
 
 	test('theme toggle button works correctly', async ({ page }) => {

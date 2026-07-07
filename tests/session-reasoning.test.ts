@@ -44,15 +44,15 @@ test.describe('Session reasoning tag handling', () => {
 		await expect(page.locator('.article--reasoning')).not.toBeVisible();
 
 		// Check reasoning content and toggle
-		await expect(page.getByRole('button', { name: 'Reasoning' })).toBeVisible();
-		await page.getByRole('button', { name: 'Reasoning' }).click();
+		await expect(page.getByRole('button', { name: 'Reasoning', exact: true })).toBeVisible();
+		await page.getByRole('button', { name: 'Reasoning', exact: true }).click();
 		await expect(page.locator('.article--reasoning')).toBeVisible();
 		await expect(page.locator('.article--reasoning')).toHaveText(
 			'Let me analyze this request carefully. The user is asking about code testing, which requires a structured response.'
 		);
 
 		// Toggle off the reasoning
-		await page.getByRole('button', { name: 'Reasoning' }).click();
+		await page.getByRole('button', { name: 'Reasoning', exact: true }).click();
 		await expect(page.locator('.article--reasoning')).not.toBeVisible();
 
 		// Verify the response structure when copying - should not include tags or reasoning
@@ -79,7 +79,7 @@ test.describe('Session reasoning tag handling', () => {
 		await page.getByText('Run').click();
 
 		// Wait for the reasoning button to appear, indicating the reasoning tag was processed
-		await expect(page.getByRole('button', { name: 'Reasoning' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Reasoning', exact: true })).toBeVisible();
 
 		// At this point, the reasoning content should be streaming in, but the final part should not yet be visible
 		await expect(page.locator('.article--assistant')).not.toContainText('This is outside a tag');
@@ -87,25 +87,21 @@ test.describe('Session reasoning tag handling', () => {
 		// Wait for the completion to finish - it will show "This is outside a tag" at the end
 		await expect(page.locator('.article--assistant')).toBeVisible();
 
-		// Need to wait for all streaming chunks to complete
-		await page.waitForFunction(() => {
-			// Find the assistant's message container
-			const assistantEl = document.querySelector('.article--assistant');
-			// Check if it contains our final text
-			return (
-				assistantEl &&
-				assistantEl.textContent &&
-				assistantEl.textContent.includes('This is outside a tag')
-			);
-		});
+		// Wait for all streaming chunks to complete. This is a locator assertion
+		// (polled via CDP), NOT page.waitForFunction — the app's strict privacy
+		// CSP (`script-src 'self'` with no `unsafe-eval`) refuses waitForFunction's
+		// in-page eval poller whenever the predicate isn't already true on the
+		// first check (exactly the char-by-char streaming case). Same intent:
+		// block until the assistant article contains the post-tag final text.
+		await expect(page.locator('.article--assistant')).toContainText('This is outside a tag');
 
 		// Now test that tags are stripped
 		await expect(page.getByText('<think>')).not.toBeVisible();
 		await expect(page.getByText('</think>')).not.toBeVisible();
 
 		// Check reasoning button and content
-		await expect(page.getByRole('button', { name: 'Reasoning' })).toBeVisible();
-		await page.getByRole('button', { name: 'Reasoning' }).click();
+		await expect(page.getByRole('button', { name: 'Reasoning', exact: true })).toBeVisible();
+		await page.getByRole('button', { name: 'Reasoning', exact: true }).click();
 		await expect(page.locator('.article--reasoning')).toBeVisible();
 		await expect(page.locator('.article--reasoning')).toHaveText('This is in a thinking tag');
 	});
@@ -165,7 +161,7 @@ test.describe('Session reasoning tag handling', () => {
 		await page.getByText('Run').click();
 
 		// Wait for the reasoning button to appear, indicating the reasoning tag was processed
-		await expect(page.getByRole('button', { name: 'Reasoning' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Reasoning', exact: true })).toBeVisible();
 
 		// At this point, the reasoning content should be streaming in, but the final part should not yet be visible
 		await expect(page.locator('.article--assistant')).not.toContainText('This is outside a tag');
@@ -173,25 +169,21 @@ test.describe('Session reasoning tag handling', () => {
 		// Wait for the completion to finish - it will show "This is outside a tag" at the end
 		await expect(page.locator('.article--assistant')).toBeVisible();
 
-		// Need to wait for all streaming chunks to complete
-		await page.waitForFunction(() => {
-			// Find the assistant's message container
-			const assistantEl = document.querySelector('.article--assistant');
-			// Check if it contains our final text
-			return (
-				assistantEl &&
-				assistantEl.textContent &&
-				assistantEl.textContent.includes('This is outside a tag')
-			);
-		});
+		// Wait for all streaming chunks to complete. This is a locator assertion
+		// (polled via CDP), NOT page.waitForFunction — the app's strict privacy
+		// CSP (`script-src 'self'` with no `unsafe-eval`) refuses waitForFunction's
+		// in-page eval poller whenever the predicate isn't already true on the
+		// first check (exactly the char-by-char streaming case). Same intent:
+		// block until the assistant article contains the post-tag final text.
+		await expect(page.locator('.article--assistant')).toContainText('This is outside a tag');
 
 		// Now test that tags are stripped
 		await expect(page.getByText('<thought>')).not.toBeVisible();
 		await expect(page.getByText('</thought>')).not.toBeVisible();
 
 		// Check reasoning button and content
-		await expect(page.getByRole('button', { name: 'Reasoning' })).toBeVisible();
-		await page.getByRole('button', { name: 'Reasoning' }).click();
+		await expect(page.getByRole('button', { name: 'Reasoning', exact: true })).toBeVisible();
+		await page.getByRole('button', { name: 'Reasoning', exact: true }).click();
 		await expect(page.locator('.article--reasoning')).toBeVisible();
 		await expect(page.locator('.article--reasoning')).toHaveText('This is in a thought tag');
 	});
@@ -230,6 +222,280 @@ test.describe('Session reasoning tag handling', () => {
 		// Assert that there are no visible reasoning components
 		await expect(page.locator('.reasoning')).toHaveCount(0);
 		await expect(page.locator('.article--reasoning')).toHaveCount(0);
-		await expect(page.getByRole('button', { name: 'Reasoning' })).toHaveCount(0);
+		await expect(page.getByRole('button', { name: 'Reasoning', exact: true })).toHaveCount(0);
+	});
+
+	test('reasoning toggle is available for Ollama and sends think:true when enabled', async ({
+		page
+	}) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+
+		// The reasoning toggle shows for Ollama (no longer gated to Fireworks).
+		const reasoningToggle = page.getByTestId('reasoning-toggle');
+		await expect(reasoningToggle).toBeVisible();
+		await reasoningToggle.click();
+
+		let payload: Record<string, unknown> = {};
+		await page.route('**/api/chat', async (route) => {
+			payload = JSON.parse(route.request().postData() || '{}');
+			await route.fulfill({
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify({
+					model: 'm',
+					message: { role: 'assistant', content: 'ok' },
+					done: true
+				})
+			});
+		});
+		await promptTextarea.fill('Think about this');
+		await page.getByText('Run').click();
+		await expect(page.locator('.article--assistant')).toContainText('ok');
+
+		// Ollama's native thinking is requested; the OpenAI reasoningEffort param is not leaked.
+		expect(payload.think).toBe(true);
+		expect(payload.reasoningEffort).toBeUndefined();
+	});
+
+	test('Ollama native thinking field renders as a reasoning trace', async ({ page }) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+		await page.getByTestId('reasoning-toggle').click();
+
+		// A streamed Ollama NDJSON response carrying the native `thinking` field
+		// (separate from content) — not inline <think> tags.
+		const ndjson =
+			[
+				JSON.stringify({
+					model: 'm',
+					message: {
+						role: 'assistant',
+						content: '',
+						thinking: 'Let me reason about this carefully.'
+					},
+					done: false
+				}),
+				JSON.stringify({
+					model: 'm',
+					message: { role: 'assistant', content: 'The answer is 42.' },
+					done: false
+				}),
+				JSON.stringify({ model: 'm', message: { role: 'assistant', content: '' }, done: true })
+			].join('\n') + '\n';
+		await page.route('**/api/chat', (route) =>
+			route.fulfill({ status: 200, contentType: 'application/x-ndjson', body: ndjson })
+		);
+
+		await promptTextarea.fill('What is the answer?');
+		await page.getByText('Run').click();
+
+		// Main content rendered; the thinking field surfaced as a reasoning trace.
+		await expect(page.locator('.article--assistant')).toContainText('The answer is 42.');
+		await expect(page.getByRole('button', { name: 'Reasoning', exact: true })).toBeVisible();
+		await page.getByRole('button', { name: 'Reasoning', exact: true }).click();
+		await expect(page.locator('.article--reasoning')).toContainText(
+			'Let me reason about this carefully.'
+		);
+	});
+
+	test('reasoning OFF (default) does not send think to Ollama', async ({ page }) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+		// Do NOT enable the reasoning toggle — off must mean off.
+
+		let payload: Record<string, unknown> = {};
+		await page.route('**/api/chat', async (route) => {
+			payload = JSON.parse(route.request().postData() || '{}');
+			await route.fulfill({
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify({
+					model: 'm',
+					message: { role: 'assistant', content: 'ok' },
+					done: true
+				})
+			});
+		});
+		await promptTextarea.fill('Hi');
+		await page.getByText('Run').click();
+		await expect(page.locator('.article--assistant')).toContainText('ok');
+
+		expect(payload.think).toBeUndefined();
+		expect(payload.reasoningEffort).toBeUndefined();
+	});
+
+	test('reasoning on a non-capable model degrades: retries without it and warns', async ({
+		page
+	}) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+		await page.getByTestId('reasoning-toggle').click();
+
+		const thinkSeen: boolean[] = [];
+		await page.route('**/api/chat', async (route) => {
+			const body = JSON.parse(route.request().postData() || '{}');
+			thinkSeen.push(body.think === true);
+			if (body.think) {
+				// First attempt: the model rejects native thinking.
+				await route.fulfill({
+					status: 400,
+					contentType: 'application/json',
+					body: JSON.stringify({ error: 'model does not support thinking' })
+				});
+			} else {
+				// Retry without reasoning succeeds.
+				await route.fulfill({
+					status: 200,
+					contentType: 'application/json',
+					body: JSON.stringify({
+						model: 'm',
+						message: { role: 'assistant', content: 'plain answer' },
+						done: true
+					})
+				});
+			}
+		});
+		await promptTextarea.fill('Hi');
+		await page.getByText('Run').click();
+
+		// User still gets a usable response (the retry without reasoning)...
+		await expect(page.locator('.article--assistant')).toContainText('plain answer');
+		// ...plus a clear notice that reasoning was dropped.
+		await expect(page.getByText('may not support reasoning', { exact: false })).toBeVisible();
+		// Exactly two attempts: first WITH think, then WITHOUT.
+		expect(thinkSeen).toEqual([true, false]);
+	});
+
+	test('a truncated final NDJSON frame surfaces an error, not a silent empty completion', async ({
+		page
+	}) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+
+		// A valid first line, then a truncated (unparseable) final fragment with no
+		// trailing newline → the stream-end flush must throw, not commit silently.
+		const ndjson =
+			JSON.stringify({
+				model: 'm',
+				message: { role: 'assistant', content: 'partial' },
+				done: false
+			}) +
+			'\n' +
+			'{"model":"m","message":{"role":"assistant","content":"tr';
+		await page.route('**/api/chat', (route) =>
+			route.fulfill({ status: 200, contentType: 'application/x-ndjson', body: ndjson })
+		);
+		await promptTextarea.fill('Hi');
+		await page.getByText('Run').click();
+
+		await expect(page.getByText('something went wrong', { exact: false })).toBeVisible();
+	});
+
+	test('Ollama thinking in an unterminated final frame renders (stream-end path)', async ({
+		page
+	}) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+		await page.getByTestId('reasoning-toggle').click();
+
+		// Single frame, done:true, WITH thinking, and NO trailing newline → this is
+		// handled entirely by the stream-end flush, not the mid-stream loop.
+		const body = JSON.stringify({
+			model: 'm',
+			message: { role: 'assistant', content: 'Answer.', thinking: 'end-buffer reasoning' },
+			done: true
+		});
+		await page.route('**/api/chat', (route) =>
+			route.fulfill({ status: 200, contentType: 'application/x-ndjson', body })
+		);
+		await promptTextarea.fill('Hi');
+		await page.getByText('Run').click();
+
+		await expect(page.locator('.article--assistant')).toContainText('Answer.');
+		await page.getByRole('button', { name: 'Reasoning', exact: true }).click();
+		await expect(page.locator('.article--reasoning')).toContainText('end-buffer reasoning');
+	});
+
+	test('reasoning enabled but the model returns no trace warns (lenient-ignore dead toggle)', async ({
+		page
+	}) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+		await page.getByTestId('reasoning-toggle').click();
+
+		// Success, content only, NO thinking/reasoning — a lenient server that
+		// silently ignored the reasoning param (no error to catch).
+		await page.route('**/api/chat', (route) =>
+			route.fulfill({
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify({
+					model: 'm',
+					message: { role: 'assistant', content: 'plain answer, no reasoning' },
+					done: true
+				})
+			})
+		);
+		await promptTextarea.fill('Hi');
+		await page.getByText('Run').click();
+
+		await expect(page.locator('.article--assistant')).toContainText('plain answer, no reasoning');
+		// The dead toggle is now surfaced instead of silently doing nothing.
+		await expect(page.getByText('may not support reasoning', { exact: false })).toBeVisible();
+	});
+
+	test('native thinking + inline <think> are both surfaced, not silently dropped', async ({
+		page
+	}) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+		await page.getByTestId('reasoning-toggle').click();
+
+		// Pathological response carrying BOTH a native `thinking` field AND an
+		// inline <think> tag in content. hollama can't know whether they're
+		// duplicates, so it surfaces both reasoning sources rather than silently
+		// dropping either — this pins that documented behavior (was untested).
+		const ndjson =
+			[
+				JSON.stringify({
+					model: 'm',
+					message: { role: 'assistant', content: '', thinking: 'native reasoning' },
+					done: false
+				}),
+				JSON.stringify({
+					model: 'm',
+					message: { role: 'assistant', content: '<think>tag reasoning</think>Answer.' },
+					done: false
+				}),
+				JSON.stringify({ model: 'm', message: { role: 'assistant', content: '' }, done: true })
+			].join('\n') + '\n';
+		await page.route('**/api/chat', (route) =>
+			route.fulfill({ status: 200, contentType: 'application/x-ndjson', body: ndjson })
+		);
+		await promptTextarea.fill('Hi');
+		await page.getByText('Run').click();
+
+		await expect(page.locator('.article--assistant')).toContainText('Answer.');
+		await page.getByRole('button', { name: 'Reasoning', exact: true }).click();
+		const reasoning = page.locator('.article--reasoning');
+		await expect(reasoning).toContainText('native reasoning');
+		await expect(reasoning).toContainText('tag reasoning');
 	});
 });

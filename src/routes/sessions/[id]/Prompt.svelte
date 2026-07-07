@@ -1,5 +1,14 @@
 <script lang="ts">
-	import { Brain, CircleStop, Image, LoaderCircle, UnfoldVertical } from 'lucide-svelte';
+	import {
+		Brain,
+		CircleStop,
+		FolderOpen,
+		Image,
+		LoaderCircle,
+		Pin,
+		Sparkles,
+		UnfoldVertical
+	} from 'lucide-svelte';
 	import MessageSquareText from 'lucide-svelte/icons/message-square-text';
 	import Settings_2 from 'lucide-svelte/icons/settings-2';
 	import Trash_2 from 'lucide-svelte/icons/trash-2';
@@ -11,9 +20,17 @@
 	import Field from '$lib/components/Field.svelte';
 	import FieldSelectModel from '$lib/components/FieldSelectModel.svelte';
 	import FieldTextEditor from '$lib/components/FieldTextEditor.svelte';
+	import FileBrowser from '$lib/components/FileBrowser.svelte';
 	import { ConnectionType } from '$lib/connections';
+	import {
+		addFileReference,
+		fileContentQuery,
+		removeFileReference,
+		togglePersistence,
+		type FileReference
+	} from '$lib/files';
 	import { loadKnowledge, type Knowledge } from '$lib/knowledge';
-	import { knowledgeStore, serversStore } from '$lib/localStorage';
+	import { filesStore, knowledgeStore, serversStore } from '$lib/localStorage';
 	import type { Editor, Message, Session } from '$lib/sessions';
 	import { generateRandomId } from '$lib/utils';
 
@@ -35,6 +52,16 @@
 
 	type Attachment = KnowledgeAttachment | ImageAttachment;
 
+	// File attachments are deliberately NOT part of the `attachments` array
+	// above. `filesStore` (localStorage-backed, see $lib/files.ts) is already
+	// the durable source of truth for "currently selected files" — a
+	// persistent file must survive `submit()`'s end-of-send attachment reset,
+	// and re-deriving that from a plain in-memory array would either
+	// duplicate state or need a bespoke reset exception. Reading the store
+	// directly at send time and rendering it as its own section below keeps
+	// one source of truth instead of two that could drift.
+	let isFileBrowserOpen = $state(false);
+
 	interface Props {
 		editor: Editor;
 		session: Session;
@@ -55,10 +82,17 @@
 
 	let attachments: Attachment[] = $state([]);
 
-	const isOllamaFamily = $derived(
-		$serversStore.find((s) => s.id === session.model?.serverId)?.connectionType ===
-			ConnectionType.Ollama
+	const currentServer = $derived(
+		$serversStore.find((s) => s.id === session.model?.serverId)
 	);
+
+	const isOllamaFamily = $derived(
+		currentServer?.connectionType === ConnectionType.Ollama
+	);
+
+	function toggleReasoning() {
+		session.reasoningEffort = session.reasoningEffort ? undefined : 'high';
+	}
 
 	$effect(() => {
 		if (attachments.length) scrollToBottom(true);
@@ -229,7 +263,22 @@
 		];
 	}
 
-	function submit() {
+	async function fetchFileContent(file: FileReference): Promise<string> {
+		const response = await fetch(`/api/files/content?${fileContentQuery(file)}`);
+		if (!response.ok) {
+			let reason = response.statusText || `HTTP ${response.status}`;
+			try {
+				const body = await response.json();
+				if (body?.error) reason = body.error;
+			} catch {
+				// Non-JSON error body — keep the statusText-derived reason.
+			}
+			throw new Error(reason);
+		}
+		return response.text();
+	}
+
+	async function submit() {
 		const knowledgeAttachments = attachments.filter(
 			(a): a is KnowledgeAttachment => a.type === 'knowledge'
 		);
@@ -252,6 +301,40 @@
 			attachments = attachments.filter((a) => a.type !== 'knowledge');
 		}
 
+		// File attachments are read fresh from disk at send time (not cached
+		// from selection time) and injected as a separate block after
+		// knowledge, before the user's own message.
+		const currentFiles = $filesStore;
+		if (currentFiles.length) {
+			const fileAttachmentMessages: Message[] = [];
+			for (const file of currentFiles) {
+				try {
+					const content = await fetchFileContent(file);
+					fileAttachmentMessages.push({
+						role: 'user',
+						content: `
+<CONTEXT>
+	<CONTEXT_NAME>${file.name}</CONTEXT_NAME>
+	<CONTEXT_CONTENT>${content}</CONTEXT_CONTENT>
+</CONTEXT>
+`
+					});
+					// One-off files are consumed on send; persistent ones stay
+					// selected until the user removes them.
+					if (!file.persistentlySelected) removeFileReference(file.id);
+				} catch (error) {
+					const reason = error instanceof Error ? error.message : 'Unknown error';
+					toast.error($LL.couldNotAttachFile({ name: file.name }), { description: reason });
+					// Don't let a broken reference silently fail on every future
+					// send — drop it regardless of persistent/one-off.
+					removeFileReference(file.id);
+				}
+			}
+			if (fileAttachmentMessages.length) {
+				session.messages = [...session.messages, ...fileAttachmentMessages];
+			}
+		}
+
 		const imageAttachments = attachments.filter((a): a is ImageAttachment => a.type === 'image');
 		const imagesPayload = imageAttachments.map((a) => ({
 			filename: a.name,
@@ -260,6 +343,20 @@
 
 		handleSubmit(imagesPayload.length ? imagesPayload : undefined);
 		attachments = [];
+	}
+
+	function handleBrowseFilesSelect(
+		rootIndex: number,
+		rel: string,
+		name: string,
+		persistent: boolean
+	) {
+		addFileReference(rootIndex, rel, name, persistent);
+		toast.success(
+			persistent
+				? $LL.fileAttachedPersistently({ name })
+				: $LL.fileAttachedOnce({ name })
+		);
 	}
 </script>
 
@@ -367,6 +464,36 @@
 			</div>
 		{/if}
 
+		{#if $filesStore.length}
+			<div class="attachments" data-testid="file-attachments">
+				{#each $filesStore as file (file.id)}
+					<div class="attachment">
+						<button
+							type="button"
+							class="file-badge"
+							class:file-badge--persistent={file.persistentlySelected}
+							onclick={() => togglePersistence(file.id)}
+							title={file.persistentlySelected ? $LL.persistentFileIndicator() : $LL.attachOnce()}
+							data-testid="file-attachment-badge"
+						>
+							{#if file.persistentlySelected}
+								<Pin class="base-icon" />
+							{/if}
+							<span class="file-badge__name">{file.name}</span>
+						</button>
+						<Button
+							variant="outline"
+							onclick={() => removeFileReference(file.id)}
+							aria-label={$LL.removeFile()}
+							data-testid="file-attachment-remove"
+						>
+							<Trash_2 class="base-icon" />
+						</Button>
+					</div>
+				{/each}
+			</div>
+		{/if}
+
 		<nav class="prompt-editor__toolbar">
 			<div class="attachments-toolbar">
 				<Button
@@ -385,6 +512,22 @@
 					title={$LL.attachImage()}
 				>
 					<Image class="base-icon" />
+				</Button>
+				<Button
+					variant="outline"
+					onclick={() => (isFileBrowserOpen = true)}
+					data-testid="browse-files"
+					title={$LL.browseFiles()}
+				>
+					<FolderOpen class="base-icon" />
+				</Button>
+				<Button
+					variant={session.reasoningEffort ? 'default' : 'outline'}
+					onclick={toggleReasoning}
+					data-testid="reasoning-toggle"
+					title={$LL.enableReasoning()}
+				>
+					<Sparkles class="base-icon" />
 				</Button>
 			</div>
 
@@ -434,6 +577,10 @@
 		</nav>
 	</div>
 </div>
+
+{#if isFileBrowserOpen}
+	<FileBrowser onClose={() => (isFileBrowserOpen = false)} onSelectFile={handleBrowseFilesSelect} />
+{/if}
 
 <style lang="postcss">
 	.prompt-editor {
@@ -527,5 +674,17 @@
 
 	.attachment__knowledge {
 		@apply w-full;
+	}
+
+	.file-badge {
+		@apply base-input flex w-full items-center gap-2 truncate px-3 py-2 text-left text-sm;
+	}
+
+	.file-badge--persistent {
+		@apply text-accent;
+	}
+
+	.file-badge__name {
+		@apply truncate;
 	}
 </style>

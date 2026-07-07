@@ -19,7 +19,7 @@
 		{@render headline()}
 	</div>
 
-	<nav class="flex flex-row items-center">
+	<nav class="flex flex-row items-center gap-x-1">
 		{@render nav()}
 	</nav>
 </header>

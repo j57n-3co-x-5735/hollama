@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { mockOllamaModelsResponse } from './utils';
+import { chooseFromCombobox, mockOllamaModelsResponse } from './utils';
 
 test.describe('Locales', () => {
 	test('can switch language to spanish and back to english', async ({ page }) => {
@@ -170,6 +170,29 @@ test.describe('Locales', () => {
 			expect(await page.evaluate(() => window.localStorage.getItem('hollama-settings'))).toContain(
 				'"userLanguage":"fr"'
 			);
+		});
+
+		test('newly-referenced apiKey* keys render in French (fr does not spread en)', async ({
+			page
+		}) => {
+			// fr/index.ts is a flat literal that does not spread en, so a
+			// missing new key would render the raw path. Exercise a NEW key in the
+			// connection UI (the optional-key help) under the French locale.
+			await page.goto('/settings');
+			await page.evaluate(() => window.localStorage.clear());
+			await page.reload();
+
+			await chooseFromCombobox(
+				page,
+				'Type de connexion',
+				'OpenAI : Serveurs compatibles (ex. llama.cpp)'
+			);
+			await page.getByText('Ajouter une connexion').click();
+
+			// French translation of apiKeyOptionalHelp — not the raw i18n path.
+			await expect(
+				page.getByText('Laissez vide pour les serveurs locaux', { exact: false })
+			).toBeVisible();
 		});
 	});
 });

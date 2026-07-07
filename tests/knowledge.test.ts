@@ -138,7 +138,7 @@ test('knowledge cannot be used as a system prompt in a session after deletion', 
 	await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
 	await page.getByLabel('Controls').click();
 	await page
-		.locator('fieldset:has-text("System prompt") input[aria-labelledby="knowledge-label"]')
+		.locator('fieldset:has-text("Knowledge") input[aria-labelledby="knowledge-label"]')
 		.click();
 	await expect(page.getByRole('option', { name: MOCK_KNOWLEDGE[0].name })).toBeVisible();
 	await expect(page.getByRole('option', { name: MOCK_KNOWLEDGE[1].name })).toBeVisible();
@@ -207,7 +207,7 @@ test('can use knowledge as system prompt in the session', async ({ page }) => {
 			model: MOCK_API_TAGS_RESPONSE.models[0].name,
 			options: DEFAULT_OLLAMA_OPTIONS,
 			messages: [
-				{ role: 'system', content: MOCK_KNOWLEDGE[0].content, knowledge: MOCK_KNOWLEDGE[0] },
+				{ role: 'system', content: MOCK_KNOWLEDGE[0].content },
 				{ role: 'user', content: 'What is this about?' }
 			]
 		})
@@ -227,7 +227,7 @@ test('can use knowledge as system prompt in the session', async ({ page }) => {
 			model: MOCK_API_TAGS_RESPONSE.models[0].name,
 			options: DEFAULT_OLLAMA_OPTIONS,
 			messages: [
-				{ role: 'system', content: MOCK_KNOWLEDGE[0].content, knowledge: MOCK_KNOWLEDGE[0] },
+				{ role: 'system', content: MOCK_KNOWLEDGE[0].content },
 				{ role: 'user', content: 'What is this about?' }
 			]
 		})
@@ -250,12 +250,11 @@ test('can use knowledge as system prompt in the session', async ({ page }) => {
 			model: MOCK_API_TAGS_RESPONSE.models[0].name,
 			options: DEFAULT_OLLAMA_OPTIONS,
 			messages: [
-				{ role: 'system', content: MOCK_KNOWLEDGE[0].content, knowledge: MOCK_KNOWLEDGE[0] },
+				{ role: 'system', content: MOCK_KNOWLEDGE[0].content },
 				{ role: 'user', content: 'What is this about?' },
 				{
 					role: 'assistant',
-					content: MOCK_SESSION_WITH_KNOWLEDGE_RESPONSE_1.message.content,
-					reasoning: ''
+					content: MOCK_SESSION_WITH_KNOWLEDGE_RESPONSE_1.message.content
 				},
 				{ role: 'user', content: 'Gotcha, thanks for the clarification' }
 			]
@@ -275,7 +274,7 @@ test('can use shortcut to create knowledge from session', async ({ page }) => {
 	await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
 	await page.getByLabel('Controls').click();
 	const knowledgeCombobox = page.locator(
-		'fieldset:has-text("System prompt") input[aria-labelledby="knowledge-label"]'
+		'fieldset:has-text("Knowledge") input[aria-labelledby="knowledge-label"]'
 	);
 	await expect(knowledgeCombobox).toBeDisabled();
 	await expect(knowledgeCombobox).toHaveAttribute('placeholder', 'No knowledge');

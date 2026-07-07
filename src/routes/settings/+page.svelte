@@ -3,7 +3,9 @@
 	import Head from '$lib/components/Head.svelte';
 
 	import DataManagement from './DataManagement.svelte';
+	import Files from './Files.svelte';
 	import Interface from './Interface.svelte';
+	import NetworkActivity from './NetworkActivity.svelte';
 	import Servers from './Servers.svelte';
 	import Version from './Version.svelte';
 </script>
@@ -15,6 +17,8 @@
 		<Version />
 		<Servers />
 		<Interface />
+		<Files />
+		<NetworkActivity />
 		<DataManagement />
 	</div>
 </section>

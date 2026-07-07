@@ -6,7 +6,8 @@ import {
 	MOCK_SESSION_1_RESPONSE_1,
 	MOCK_SESSION_2_RESPONSE_1,
 	mockCompletionResponse,
-	mockOllamaModelsResponse
+	mockOllamaModelsResponse,
+	setupStreamedCompletionMock
 } from './utils';
 
 test.describe('Session management', () => {
@@ -162,9 +163,11 @@ test.describe('Session management', () => {
 			/ section-list-item--active/
 		);
 
-		// Navigate to Settings and back
+		// Navigate to Settings and back. Assert a settings element that exists in
+		// this build: the auto-update checkbox was removed for privacy (see
+		// version.test.ts), so it can't stand in for "we reached settings".
 		await page.getByText('Settings').click();
-		await expect(page.getByText('Automatically check for updates')).toBeVisible();
+		await expect(page.getByText('Current version')).toBeVisible();
 
 		await page.getByRole('tab', { name: 'Sessions' }).click();
 
@@ -231,6 +234,120 @@ test.describe('Session management', () => {
 		await page.getByTitle('Confirm deletion').click();
 		await expect(page.getByText('No sessions')).toBeVisible();
 		expect(await page.getByTestId('session-item').count()).toBe(0);
+	});
+
+	test('does not resurrect a deleted session after navigating away', async ({ page }) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+
+		// Create session A
+		await mockCompletionResponse(page, MOCK_SESSION_1_RESPONSE_1);
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+		await promptTextarea.fill('Who would win in a fight between Emma Watson and Jessica Alba?');
+		await page.getByText('Run').click();
+		await expect(page.getByText(MOCK_SESSION_1_RESPONSE_1.message.content)).toBeVisible();
+
+		// Create session B so the sidebar isn't trivially empty after deleting A
+		await mockCompletionResponse(page, MOCK_SESSION_2_RESPONSE_1);
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[1].name);
+		await promptTextarea.fill('What does the fox say?');
+		await page.getByText('Run').click();
+		await expect(page.getByText(MOCK_SESSION_2_RESPONSE_1.message.content)).toBeVisible();
+
+		expect(await page.getByTestId('session-item').count()).toBe(2);
+
+		// Navigate to session A (the older one, last in the sidebar) and delete it from the sidebar
+		// while it's the currently-viewed session — this is the exact path that triggers
+		// beforeNavigate's stale-session-reference resurrection bug.
+		await page.getByTestId('session-item').last().click();
+		await expect(page.getByText(MOCK_SESSION_1_RESPONSE_1.message.content)).toBeVisible();
+
+		await page.locator('.section-list-item').last().hover();
+		await page.locator('.section-list-item').last().getByTitle('Delete session').click();
+		await page.getByTitle('Confirm deletion').click();
+
+		// Deleting navigates to /sessions, which fires beforeNavigate on the just-deleted
+		// session's page — without the guard, saveSession() would resurrect it here.
+		await expect(page).toHaveURL('/sessions');
+		expect(await page.getByTestId('session-item').count()).toBe(1);
+		await expect(page.getByText('What does the fox say?')).toBeVisible();
+		await expect(page.getByText('Who would win in a fight')).not.toBeVisible();
+
+		// Reload to confirm the deletion persisted and nothing wrote the session back
+		await page.reload();
+		expect(await page.getByTestId('session-item').count()).toBe(1);
+		await expect(page.getByText('What does the fox say?')).toBeVisible();
+		await expect(page.getByText('Who would win in a fight')).not.toBeVisible();
+	});
+
+	test('does not resurrect a deleted session when its completion finishes mid-stream', async ({
+		page
+	}) => {
+		await page.goto('/');
+		await page.getByRole('tab', { name: 'Sessions' }).click();
+
+		// Session A — an existing, saved session with one completed exchange.
+		await mockCompletionResponse(page, MOCK_SESSION_1_RESPONSE_1);
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
+		await promptTextarea.fill('Who would win in a fight between Emma Watson and Jessica Alba?');
+		await page.getByText('Run').click();
+		await expect(page.getByText(MOCK_SESSION_1_RESPONSE_1.message.content)).toBeVisible();
+
+		// Session B — so the sidebar isn't trivially empty after deleting A.
+		await mockCompletionResponse(page, MOCK_SESSION_2_RESPONSE_1);
+		await page.getByTestId('new-session').click();
+		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[1].name);
+		await promptTextarea.fill('What does the fox say?');
+		await page.getByText('Run').click();
+		await expect(page.getByText(MOCK_SESSION_2_RESPONSE_1.message.content)).toBeVisible();
+		expect(await page.getByTestId('session-item').count()).toBe(2);
+
+		// Return to A (older → last in the sidebar) and start a SECOND completion
+		// that we hold open mid-stream via the manual streaming mock.
+		await page.getByTestId('session-item').last().click();
+		await expect(page.getByText(MOCK_SESSION_1_RESPONSE_1.message.content)).toBeVisible();
+
+		const stream = await setupStreamedCompletionMock(page, { manual: true });
+		if (!stream)
+			throw new Error('setupStreamedCompletionMock did not return a stream object in manual mode');
+
+		await promptTextarea.fill('Actually, tell me more');
+		await page.getByText('Run').click();
+		// Emit a partial chunk but do NOT finish — the completion is now in flight.
+		// (A locator assertion, not page.waitForFunction — the app's strict CSP
+		// forbids unsafe-eval, which waitForFunction relies on.)
+		stream.sendChunk('Streaming a partial response', false);
+		await expect(page.locator('.article--assistant').last()).toContainText(
+			'Streaming a partial response'
+		);
+
+		// Delete A from the sidebar while its completion is still streaming. This
+		// is the exact path the resurrection guard must cover: deletion removes A
+		// from the store, then the in-flight completion resolves and — without the
+		// guard in handleCompletion()/stopCompletion() and the beforeNavigate
+		// abort — saveSession()'s upsert would re-insert it.
+		await page.locator('.section-list-item').last().hover();
+		await page.locator('.section-list-item').last().getByTitle('Delete session').click();
+		await page.getByTitle('Confirm deletion').click();
+		await expect(page).toHaveURL('/sessions');
+
+		// Let the stream resolve after the deletion; give the completion handler a
+		// tick to run whatever save path it would take.
+		stream.sendChunk(' that just finished.', true);
+		await page.waitForTimeout(300);
+
+		// A must not have come back — only B remains.
+		expect(await page.getByTestId('session-item').count()).toBe(1);
+		await expect(page.getByText('What does the fox say?')).toBeVisible();
+		await expect(page.getByText('Who would win in a fight')).not.toBeVisible();
+
+		// And it stays gone across a reload (nothing wrote it back to storage).
+		await page.reload();
+		expect(await page.getByTestId('session-item').count()).toBe(1);
+		await expect(page.getByText('Who would win in a fight')).not.toBeVisible();
 	});
 
 	test('truncates session titles correctly', async ({ page }) => {

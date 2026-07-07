@@ -1,6 +1,9 @@
 <script lang="ts">
+	import { get } from 'svelte/store';
+
 	import LL from '$i18n/i18n-svelte';
 	import EmptyMessage from '$lib/components/EmptyMessage.svelte';
+	import { sessionsStore } from '$lib/localStorage';
 	import { saveSession, type Editor, type Message, type Session } from '$lib/sessions';
 
 	import Article from './Article.svelte';
@@ -28,11 +31,20 @@
 
 	function handleDeleteAttachment(message: Message) {
 		session.messages = session.messages.filter((m) => m !== message);
-		saveSession(session);
+		// Only persist if the session still exists in the store — if it was
+		// deleted (e.g. via multi-select) while being viewed, saveSession()'s
+		// upsert would otherwise resurrect it.
+		if (get(sessionsStore).some((s) => s.id === session.id)) {
+			saveSession(session);
+		}
 	}
 </script>
 
-{#if editor.isNewSession}
+<!-- Show the empty-state whenever there are no messages — NOT only when
+	isNewSession is true. An existing session whose messages were all removed in
+	place (e.g. deleting its last attachment) has isNewSession=false but zero
+	messages; keying only on isNewSession rendered a blank void instead. -->
+{#if session.messages.length === 0 && !editor.isCompletionInProgress}
 	<EmptyMessage>{$LL.writePromptToStart()}</EmptyMessage>
 {/if}
 

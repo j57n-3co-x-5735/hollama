@@ -1,7 +1,12 @@
 import { promises as fs } from 'fs';
 import { expect, test } from '@playwright/test';
 
-import { MOCK_API_TAGS_RESPONSE, MOCK_KNOWLEDGE, mockOllamaModelsResponse } from './utils';
+import {
+	chooseModel,
+	MOCK_API_TAGS_RESPONSE,
+	MOCK_KNOWLEDGE,
+	mockOllamaModelsResponse
+} from './utils';
 
 test('deletes all preferences and resets to default values', async ({ page }) => {
 	await mockOllamaModelsResponse(page);
@@ -207,7 +212,7 @@ test('imports server configuration from JSON file', async ({ page }, testInfo) =
 	const customServerConfig = [
 		{
 			id: 'test-server-1',
-			name: 'Test Server',
+			label: 'Test Server',
 			baseUrl: 'http://test-server:11434',
 			connectionType: 'ollama',
 			isVerified: null,
@@ -215,9 +220,11 @@ test('imports server configuration from JSON file', async ({ page }, testInfo) =
 		},
 		{
 			id: 'test-server-2',
-			name: 'OpenAI Server',
+			label: 'OpenAI Server',
 			baseUrl: 'https://api.openai.com/v1',
 			connectionType: 'openai',
+			// A key deliberately present in the import file — privacy hardening
+			// must strip it (never persist it to hollama-servers), asserted below.
 			apiKey: 'my-secret-api-key',
 			isVerified: null,
 			isEnabled: true
@@ -242,12 +249,16 @@ test('imports server configuration from JSON file', async ({ page }, testInfo) =
 	);
 	const serversConfig = JSON.parse(serversConfigRaw || '[]');
 	expect(serversConfig).toHaveLength(2);
-	expect(serversConfig[0].name).toBe('Test Server');
+	expect(serversConfig[0].label).toBe('Test Server');
 	expect(serversConfig[1].baseUrl).toBe('https://api.openai.com/v1');
+	// Privacy: the imported apiKey must never be written to browser storage.
+	expect(serversConfigRaw).not.toContain('my-secret-api-key');
 	await expect(page.getByTestId('server')).toHaveCount(2);
 	await expect(page.getByLabel('Base URL').nth(0)).toHaveValue('http://test-server:11434');
 	await expect(page.getByLabel('Base URL').nth(1)).toHaveValue('https://api.openai.com/v1');
-	await expect(page.getByLabel('API Key').nth(0)).toHaveValue('my-secret-api-key');
+	// The API Key field is transient (server-side credential model) — an imported
+	// key is stripped, so the field loads empty rather than showing it.
+	await expect(page.getByLabel('API Key').nth(0)).toHaveValue('');
 });
 
 test('imports session data from JSON file', async ({ page }, testInfo) => {
@@ -392,4 +403,141 @@ test('imports preferences data from JSON file', async ({ page }, testInfo) => {
 
 	await expect(page.getByText('Dark')).not.toBeVisible();
 	await expect(page.getByText('Claro')).toBeVisible();
+});
+
+test('system prompt text survives export and import', async ({ page }, testInfo) => {
+	await mockOllamaModelsResponse(page);
+
+	// Seed a session with systemPromptText
+	const SESSION_WITH_SYSTEM_PROMPT = [
+		{
+			id: 'sp-test',
+			model: { name: MOCK_API_TAGS_RESPONSE.models[0].name, serverId: 'default' },
+			messages: [
+				{ role: 'user', content: 'Test' },
+				{ role: 'assistant', content: 'Response' }
+			],
+			options: {},
+			systemPrompt: { role: 'system', content: '' },
+			systemPromptText: 'You are a helpful assistant',
+			updatedAt: '2024-09-24T14:24:30.725Z'
+		}
+	];
+	await page.evaluate(
+		(data) => window.localStorage.setItem('hollama-sessions', JSON.stringify(data)),
+		SESSION_WITH_SYSTEM_PROMPT
+	);
+	await page.reload();
+
+	// Navigate to session and verify system prompt is there via header panel
+	await page.getByRole('tab', { name: 'Sessions' }).click();
+	await page.getByText('Test').click();
+	await page.getByTestId('session-system-prompt-button').click();
+	await expect(page.locator('#session-system-prompt-textarea')).toHaveValue('You are a helpful assistant');
+
+	// Export sessions
+	await page.getByRole('link', { name: 'Settings' }).click();
+	const [download] = await Promise.all([
+		page.waitForEvent('download'),
+		page.getByTestId('data-management-hollama-sessions').getByText('Export').click()
+	]);
+	const exportPath = testInfo.outputPath('exported-sessions.json');
+	await download.saveAs(exportPath);
+
+	// Clear sessions
+	page.on('dialog', (dialog) => dialog.accept());
+	await page.getByTestId('data-management-hollama-sessions').getByText('Delete').click();
+	await expect(page.getByText('Deleted successfully')).toBeVisible();
+
+	// Import the exported file
+	const fileInputSelector = 'input#import-hollama-sessions-input';
+	await page.getByTestId('data-management-hollama-sessions').getByText('Import').click();
+	await page.setInputFiles(fileInputSelector, exportPath);
+	await expect(page.getByText('Import successful')).toBeVisible();
+
+	// Verify systemPromptText survived the round-trip
+	await page.getByRole('tab', { name: 'Sessions' }).click();
+	await page.getByText('Test').click();
+	await page.getByTestId('session-system-prompt-button').click();
+	await expect(page.locator('#session-system-prompt-textarea')).toHaveValue('You are a helpful assistant');
+});
+
+test('folders and files stores are exportable, importable, and deletable', async ({
+	page
+}, testInfo) => {
+	await mockOllamaModelsResponse(page);
+
+	const testFolders = [
+		{ id: 'f1', name: 'Research', isExpanded: true, sortOrder: 0, updatedAt: new Date().toISOString() }
+	];
+	const testFiles = [{ id: 'file1', path: '/tmp/notes.txt', name: 'notes.txt', persistentlySelected: true }];
+
+	await page.evaluate(
+		({ folders, files }) => {
+			window.localStorage.setItem('hollama-folders', JSON.stringify(folders));
+			window.localStorage.setItem('hollama-files', JSON.stringify(files));
+		},
+		{ folders: testFolders, files: testFiles }
+	);
+	await page.reload();
+	await page.getByRole('link', { name: 'Settings' }).click();
+
+	await expect(page.getByTestId('data-management-hollama-folders')).toContainText('Folders');
+	await expect(page.getByTestId('data-management-hollama-files')).toContainText('Files');
+
+	// Export folders
+	const [foldersDownload] = await Promise.all([
+		page.waitForEvent('download'),
+		page.getByTestId('data-management-hollama-folders').getByText('Export').click()
+	]);
+	expect(foldersDownload.suggestedFilename()).toBe('hollama-folders.json');
+	const foldersPath = testInfo.outputPath('exported-folders.json');
+	await foldersDownload.saveAs(foldersPath);
+	const foldersContent = await fs.readFile(foldersPath, 'utf8');
+	expect(foldersContent).toContain('Research');
+
+	// Delete folders individually — does not touch files
+	page.on('dialog', (dialog) => dialog.accept());
+	await page.getByTestId('data-management-hollama-folders').getByText('Delete').click();
+	await expect(page.getByText('Deleted successfully')).toBeVisible();
+	expect(await page.evaluate(() => window.localStorage.getItem('hollama-folders'))).toBe('[]');
+	expect(await page.evaluate(() => window.localStorage.getItem('hollama-files'))).toContain('notes.txt');
+
+	// Re-import the exported folders file
+	const fileInputSelector = 'input#import-hollama-folders-input';
+	await page.getByTestId('data-management-hollama-folders').getByText('Import').click();
+	await page.setInputFiles(fileInputSelector, foldersPath);
+	await expect(page.getByText('Import successful')).toBeVisible();
+	await page.waitForFunction(() => window.localStorage.getItem('hollama-folders') !== '[]');
+	expect(await page.evaluate(() => window.localStorage.getItem('hollama-folders'))).toContain('Research');
+
+	// Delete files store individually
+	await page.getByTestId('data-management-hollama-files').getByText('Delete').click();
+	expect(await page.evaluate(() => window.localStorage.getItem('hollama-files'))).toBe('[]');
+});
+
+test('deleting all sessions also clears folders (empty folders would be confusing)', async ({
+	page
+}) => {
+	await mockOllamaModelsResponse(page);
+
+	const testFolders = [
+		{ id: 'f1', name: 'Research', isExpanded: true, sortOrder: 0, updatedAt: new Date().toISOString() }
+	];
+	await page.evaluate(
+		(folders) => window.localStorage.setItem('hollama-folders', JSON.stringify(folders)),
+		testFolders
+	);
+	await page.reload();
+	await page.getByRole('tab', { name: 'Sessions' }).click();
+	await expect(page.getByTestId('folder-item')).toBeVisible();
+
+	await page.getByRole('link', { name: 'Settings' }).click();
+	page.on('dialog', (dialog) => dialog.accept('Are you sure you want to delete all sessions?'));
+	await page.getByTestId('data-management-hollama-sessions').getByText('Delete').click();
+	await expect(page.getByText('Deleted successfully')).toBeVisible();
+
+	expect(await page.evaluate(() => window.localStorage.getItem('hollama-folders'))).toBe('[]');
+	await page.getByRole('tab', { name: 'Sessions' }).click();
+	await expect(page.getByTestId('folder-item')).not.toBeVisible();
 });

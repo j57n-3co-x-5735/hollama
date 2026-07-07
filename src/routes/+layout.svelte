@@ -9,25 +9,32 @@
 	import '../app.pcss';
 
 	import type { Locales } from '$i18n/i18n-types';
-	import { env } from '$env/dynamic/public';
 	import { browser } from '$app/environment';
 	import { onNavigate } from '$app/navigation';
 	import CollapsibleSidebar from '$lib/components/CollapsibleSidebar.svelte';
 	import SidebarToggle from '$lib/components/SidebarToggle.svelte';
-	import { ConnectionType, getDefaultServer } from '$lib/connections';
+	import { ConnectionType, getDefaultServer, type Server } from '$lib/connections';
 	import { serversStore, settingsStore, StorageKey } from '$lib/localStorage';
-	import { checkForUpdates } from '$lib/updates';
 
 	let { children }: { children: Snippet } = $props();
 
-	onNavigate(async (navigation) => {
-		// Check for updates whenever the user follows a link (if auto-check is enabled)
-		if (!($settingsStore.autoCheckForUpdates === false)) await checkForUpdates();
-
-		// Auto-collapse sidebar on mobile when navigating (except for exact /sessions and /knowledge)
+	onNavigate((navigation) => {
+		// Auto-collapse the sidebar on mobile when navigating to a full page. On
+		// mobile the expanded sidebar is a 90vw drawer over a full-screen scrim
+		// (see CollapsibleSidebar), so leaving it open would bury the page the
+		// user just navigated to. Keep it open ONLY for the two segmented-tab list
+		// views (/sessions, /knowledge), which merely swap the drawer's OWN
+		// content — every other destination, including the bottom-nav links
+		// (motd, settings, system-prompt), is a full page and must collapse it,
+		// exactly like opening a specific session/knowledge item does.
 		if (browser && window.innerWidth < 1024) {
-			const pathname = navigation.to?.url.pathname;
-			if (pathname && pathname !== '/sessions' && pathname !== '/knowledge') {
+			const raw = navigation.to?.url.pathname;
+			// Normalize a trailing slash so '/sessions/' matches '/sessions' (keep
+			// the bare root '/' as-is). Without this, '/sessions/' collapsed the
+			// drawer while '/sessions' kept it open — an inconsistency.
+			const pathname = raw && raw.length > 1 ? raw.replace(/\/+$/, '') : raw;
+			const keepOpen = ['/sessions', '/knowledge'];
+			if (pathname && !keepOpen.includes(pathname)) {
 				$settingsStore.sidebarExpanded = false;
 			}
 		}
@@ -85,8 +92,7 @@
 						...servers,
 						{
 							...getDefaultServer(ConnectionType.OpenAI),
-							baseUrl: settings.openaiServer,
-							apiKey: settings.openaiApiKey
+							baseUrl: settings.openaiServer
 						}
 					]);
 
@@ -103,6 +109,25 @@
 			}
 		}
 
+		// Strip credentials from server configs (privacy migration). apiKey and
+		// extraHeaders are legacy fields not on the current Server type, so they
+		// are accessed/deleted through a widened shape.
+		const currentServers = $serversStore;
+		const hasCredentials = currentServers.some((s) => 'apiKey' in s || 'extraHeaders' in s);
+		if (hasCredentials) {
+			serversStore.update((servers) =>
+				servers.map((s) => {
+					const cleaned: Server & { apiKey?: unknown; extraHeaders?: unknown } = { ...s };
+					delete cleaned.apiKey;
+					delete cleaned.extraHeaders;
+					return cleaned;
+				})
+			);
+			toast.warning(
+				'Credentials have been removed from browser storage for privacy. Please re-enter them in Settings > Servers.'
+			);
+		}
+
 		// Color theme
 		if (browser && !$settingsStore.userTheme) {
 			$settingsStore.userTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -111,17 +136,6 @@
 		}
 	});
 </script>
-
-<svelte:head>
-	{#if env.PUBLIC_PLAUSIBLE_DOMAIN}
-		<script
-			defer
-			data-domain={env.PUBLIC_PLAUSIBLE_DOMAIN}
-			data-api={env.PUBLIC_PLAUSIBLE_API}
-			src={env.PUBLIC_PLAUSIBLE_SRC}
-		></script>
-	{/if}
-</svelte:head>
 
 <Toaster
 	toastOptions={{

@@ -41,24 +41,19 @@
 
 	// HACK: Stop is a `string[]` so we are hardcoding it to a single value for now
 	let stop: string = $state(session.options.stop?.[0] ?? '');
-	let knowledgeId: string | undefined = $state();
+	let knowledgeId: string | undefined = $state(session.systemPrompt.knowledge?.id);
 
 	$effect(() => {
 		if (stop) session.options.stop = [stop];
 	});
 
 	$effect(() => {
-		if (session.systemPrompt.knowledge && !knowledgeId) {
-			// Initial load: set knowledgeId if knowledge exists
-			knowledgeId = session.systemPrompt.knowledge.id;
-		} else if (knowledgeId !== session.systemPrompt.knowledge?.id) {
-			// Knowledge selection changed
+		if (knowledgeId !== session.systemPrompt.knowledge?.id) {
 			if (knowledgeId) {
 				const knowledge = loadKnowledge(knowledgeId);
 				session.systemPrompt.knowledge = knowledge;
 				session.systemPrompt.content = knowledge.content;
 			} else {
-				// Clear knowledge if knowledgeId is undefined
 				session.systemPrompt.knowledge = undefined;
 				session.systemPrompt.content = '';
 			}
@@ -68,8 +63,8 @@
 
 <div class="controls">
 	<Fieldset>
-		<P><strong>{$LL.systemPrompt()}</strong></P>
-		<KnowledgeSelect bind:value={knowledgeId} bind:options={$knowledgeStore} showNav={true} />
+		<P><strong>{$LL.knowledge()}</strong></P>
+		<KnowledgeSelect bind:value={knowledgeId} options={$knowledgeStore} showNav={true} />
 	</Fieldset>
 
 	<Fieldset>
@@ -325,4 +320,5 @@
 	.control-checkboxes {
 		@apply flex w-full flex-wrap gap-2;
 	}
+
 </style>
