@@ -1,11 +1,11 @@
 import { expect, test, type Route } from '@playwright/test';
 import type { ErrorResponse, ProgressResponse, StatusResponse } from 'ollama/browser';
-import type OpenAI from 'openai';
 
 import {
 	chooseFromCombobox,
 	MOCK_API_TAGS_RESPONSE,
 	MOCK_OPENAI_MODELS,
+	type ModelObject,
 	mockOllamaModelsResponse,
 	mockOpenAIModelsResponse
 } from './utils';
@@ -108,7 +108,9 @@ test.describe('Servers', () => {
 		localStorageServers = await page.evaluate(() => window.localStorage.getItem('hollama-servers'));
 		expect(localStorageServers).toContain('http://localhost:42069');
 		expect(localStorageServers).toContain('https://api.openai.com/v1');
-		expect(localStorageServers).toContain('sk-validapikey');
+		// Privacy: the migrated OpenAI key is NOT written to browser storage — the
+		// migration drops openaiApiKey and credentials live server-side now.
+		expect(localStorageServers).not.toContain('sk-validapikey');
 
 		const ollamaConnection = page.getByTestId('server').first();
 		await expect(toastMessage).toBeVisible();
@@ -120,7 +122,9 @@ test.describe('Servers', () => {
 		await expect(openaiConnection).toBeVisible();
 		await expect(openaiConnection.locator('.badge', { hasText: 'OpenAI' })).toBeVisible();
 		await expect(openaiConnection.getByLabel('Base URL')).toHaveValue('https://api.openai.com/v1');
-		await expect(openaiConnection.getByLabel('API Key')).toHaveValue('sk-validapikey');
+		// The API Key field is transient (server-side credential model); after
+		// migration the old key is not restored into it, so it loads empty.
+		await expect(openaiConnection.getByLabel('API Key')).toHaveValue('');
 	});
 
 	test('it redirects to sessions if at least one server is verified', async ({ page }) => {
@@ -254,7 +258,7 @@ test.describe('Servers', () => {
 		await expect(page.locator('.badge', { hasText: 'OpenAI-Compatible' })).not.toBeVisible();
 
 		// Mock a model list for the `llama.cpp` server
-		const MOCK_LLAMA_CPP_MODELS: OpenAI.Models.Model[] = [
+		const MOCK_LLAMA_CPP_MODELS: ModelObject[] = [
 			{
 				id: 'Qwen2.5-32B-Instruct-Q4_K_S.gguf',
 				object: 'model',
@@ -262,9 +266,22 @@ test.describe('Servers', () => {
 				owned_by: 'llamacpp'
 			}
 		];
-		await page.route('http://localhost:8080/v1/models', async (route: Route) => {
-			await route.fulfill({ json: { data: MOCK_LLAMA_CPP_MODELS } });
+		// The client fetches models through the same-origin proxy
+		// (/api/models?baseUrl=...), not the upstream URL directly. Branch on the
+		// baseUrl query param so the llama.cpp server returns its own models while
+		// the already-verified OpenAI server keeps returning the gpt models. This
+		// is registered after mockOpenAIModelsResponse, so it wins (Playwright
+		// runs the most recently added matching handler first).
+		await page.route('**/api/models**', async (route: Route) => {
+			const requestUrl = new URL(route.request().url());
+			const baseUrl = requestUrl.searchParams.get('baseUrl') ?? '';
+			const data = baseUrl.includes('localhost:8080') ? MOCK_LLAMA_CPP_MODELS : MOCK_OPENAI_MODELS;
+			await route.fulfill({ json: { data } });
 		});
+		// Credentials are server-side: supply a key so submitCredentials() doesn't
+		// abort the verify before the model probe runs.
+		await page.route('**/api/keys', (route) => route.fulfill({ json: { ok: true } }));
+		await connections.last().getByLabel('API Key').fill('sk-validapikey');
 		await connections.last().getByRole('button', { name: 'Verify' }).click();
 		await expect(connectionVerifiedMessage).toHaveCount(2);
 
@@ -280,6 +297,54 @@ test.describe('Servers', () => {
 		await expect(modelOption.last()).toContainText(MOCK_LLAMA_CPP_MODELS[0].id);
 		await expect(modelOption.last()).toContainText('llama.cpp');
 		await expect(modelOption.last()).not.toContainText('openai-compatible');
+	});
+
+	test('session affinity key field is only visible for OpenAICompatible connections', async ({
+		page
+	}) => {
+		await page.goto('/settings');
+		const sessionAffinityLabel = 'Session affinity key';
+
+		await chooseFromCombobox(page, 'Connection type', 'Ollama');
+		await page.getByText('Add connection').click();
+		await expect(page.getByLabel(sessionAffinityLabel)).not.toBeVisible();
+
+		await chooseFromCombobox(page, 'Connection type', 'OpenAI: Official API');
+		await page.getByText('Add connection').click();
+		await expect(page.getByLabel(sessionAffinityLabel)).not.toBeVisible();
+
+		await chooseFromCombobox(
+			page,
+			'Connection type',
+			'OpenAI: Compatible servers (i.e. llama.cpp)'
+		);
+		await page.getByText('Add connection').click();
+		await expect(page.getByLabel(sessionAffinityLabel)).toBeVisible();
+	});
+
+	test('API Key help reflects connection type (optional for compatible, guidance for official)', async ({
+		page
+	}) => {
+		await page.goto('/settings');
+		const connections = page.getByTestId('server');
+		const optionalHelp = 'Leave blank for local servers';
+		const officialHelp = 'How to obtain an API key from OpenAI?';
+
+		// OpenAI-Compatible → the key is optional (local-server help), no OpenAI link.
+		await chooseFromCombobox(
+			page,
+			'Connection type',
+			'OpenAI: Compatible servers (i.e. llama.cpp)'
+		);
+		await page.getByText('Add connection').click();
+		await expect(connections.last().getByText(optionalHelp)).toBeVisible();
+		await expect(connections.last().getByText(officialHelp)).not.toBeVisible();
+
+		// OpenAI official → the "how to obtain a key" link, no optional help.
+		await chooseFromCombobox(page, 'Connection type', 'OpenAI: Official API');
+		await page.getByText('Add connection').click();
+		await expect(connections.last().getByText(officialHelp)).toBeVisible();
+		await expect(connections.last().getByText(optionalHelp)).not.toBeVisible();
 	});
 
 	test('new connections are saved with correct serverIds', async ({ page }) => {

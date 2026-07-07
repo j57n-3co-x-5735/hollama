@@ -5,6 +5,14 @@ const fr = {
 	allowConnections: 'Changez les paramètres de votre serveur pour autoriser les connexions depuis',
 	allowMixedContent: 'Autoriser le contenu mixte',
 	apiKey: 'Clé API',
+	apiKeyOptionalHelp:
+		'Laissez vide pour les serveurs locaux (par ex. llama.cpp) qui ne nécessitent pas de clé',
+	apiKeyOptionalPlaceholder:
+		'Facultatif — laissez vide pour les serveurs locaux qui ne nécessitent pas de clé',
+	apiKeyPlaceholder: 'Entrez la clé API (stockée côté serveur)',
+	apiKeyRequired: 'Une clé API est requise',
+	apiKeyServerSideConfigured:
+		"Clé API côté serveur configurée via la variable d'environnement OPENAI_API_KEY.",
 	areYouSureYouWantToDeleteAllKnowledge:
 		'Êtes-vous sûr de vouloir supprimer toute la connaissance?',
 	areYouSureYouWantToDeleteAllSessions: 'Êtes-vous sûr de vouloir supprimer toutes les sessions?',
@@ -71,7 +79,7 @@ const fr = {
 	light: 'Clair',
 	lowVram: 'Faible VRAM',
 	mainGpu: 'GPU principal',
-	messageOfTheDay: 'Message du jour',
+	messageOfTheDay: 'Prise en main',
 	messages: 'Messages',
 	minP: 'Min P',
 	mirostat: 'Mirostat',
@@ -82,7 +90,7 @@ const fr = {
 	modelWasDownloaded: '{model:string} a été téléchargé',
 	modelsFilter: 'Filtre des noms de modèles',
 	modelsFilterHelp: 'Masque les noms de modèles ne commençant pas par le filtre',
-	motd: 'Motd',
+	motd: 'Prise en main',
 	name: 'Nom',
 	newKnowledge: 'Nouvelle connaissance',
 	newSession: 'Nouvelle session',
@@ -103,6 +111,9 @@ const fr = {
 	ollamaLibrary: 'Bibliothèque d’Ollama',
 	openAIOfficialAPI: 'OpenAI : API officielle',
 	openAICompatible: 'OpenAI : Serveurs compatibles (ex. llama.cpp)',
+	lmStudio: 'LM Studio',
+	lmStudioBaseURLHelp:
+		"Démarrez le serveur local depuis l'onglet Developer de LM Studio (port 1234 par défaut).",
 	otherModels: 'Autres modèles',
 	penalizeNewline: 'Pénaliser le retour à la ligne',
 	presencePenalty: 'Pénalité de présence',
@@ -113,6 +124,8 @@ const fr = {
 	pullingModel: 'Téléchargement du modèle en cours',
 	random: 'Aléatoire',
 	reasoning: 'Raisonnement',
+	reasoningNotSupported:
+		'Ce modèle ne prend peut-être pas en charge le raisonnement — réponse générée sans celui-ci',
 	refreshToUpdate: 'Actualiser pour mettre à jour',
 	releaseHistory: 'Historique des versions',
 	repeatLastN: 'Répéter les N derniers',
@@ -139,6 +152,12 @@ const fr = {
 	success: 'Succès',
 	system: 'Système',
 	systemPrompt: 'Invite système',
+	globalSystemPrompt: 'Global System Prompt',
+	globalSystemPromptShort: 'System Prompt',
+	globalSystemPromptDescription: 'Applies to all sessions',
+	sessionSystemPrompt: 'Session system prompt',
+	systemPromptMultipleNote:
+		'When both global and session prompts are set, some models may prioritize the last system instruction',
 	temperature: 'Température',
 	tfsZ: 'TFS Z',
 	topK: 'Top K',

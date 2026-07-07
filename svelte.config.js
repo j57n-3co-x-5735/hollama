@@ -1,4 +1,3 @@
-import adapterCloudflare from '@sveltejs/adapter-cloudflare';
 import adapterNode from '@sveltejs/adapter-node';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import dotenv from 'dotenv';
@@ -6,7 +5,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const adapterConfig = {
-	// See below for an explanation of these options
 	routes: {
 		include: ['/*'],
 		exclude: ['<all>']
@@ -15,17 +13,23 @@ const adapterConfig = {
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
-	// for more information about preprocessors
 	preprocess: [vitePreprocess({})],
 
 	kit: {
-		// adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
-		// If your environment is not supported or you settled on a specific environment, switch out the adapter.
-		// See https://kit.svelte.dev/docs/adapters for more information about adapters.
-		adapter: ['docker-node', 'electron-node'].includes(process.env.PUBLIC_ADAPTER)
-			? adapterNode(adapterConfig)
-			: adapterCloudflare(adapterConfig),
+		adapter: adapterNode(adapterConfig),
+		csp: {
+			directives: {
+				'default-src': ['self'],
+				'script-src': ['self'],
+				'style-src': ['self', 'unsafe-inline'],
+				'connect-src': ['self', 'http://localhost:*', 'http://127.0.0.1:*'],
+				'img-src': ['self', 'data:'],
+				'font-src': ['self'],
+				'frame-src': ['none'],
+				'object-src': ['none'],
+				'base-uri': ['self']
+			}
+		},
 		version: {
 			name: process.env.npm_package_version
 		},

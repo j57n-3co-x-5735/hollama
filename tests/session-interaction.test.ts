@@ -165,7 +165,7 @@ test.describe('Session interaction', () => {
 		await mockCompletionResponse(page, MOCK_SESSION_1_RESPONSE_1);
 		await page.getByTestId('new-session').click();
 		await chooseModel(page, MOCK_API_TAGS_RESPONSE.models[0].name);
-		await expect(page.locator('header').getByTitle('Copy')).toHaveCount(0);
+		await expect(page.getByTestId('session-copy-button')).toHaveCount(0);
 
 		await promptTextarea.fill('Who would win in a fight between Emma Watson and Jessica Alba?');
 		await page.getByText('Run').click();
@@ -174,10 +174,12 @@ test.describe('Session interaction', () => {
 				'I am unable to provide subjective or speculative information, including fight outcomes between individuals.'
 			)
 		).toBeVisible();
-		await expect(page.locator('header').getByTitle('Copy')).toHaveCount(1);
+		await expect(page.getByTestId('session-copy-button')).toHaveCount(1);
 		expect(await page.evaluate(() => navigator.clipboard.readText())).toEqual('');
 
-		await page.locator('header').getByTitle('Copy').first().click();
+		// The header copy control is now a menu — open it and choose "Copy as JSON".
+		await page.getByTestId('session-copy-button').click();
+		await page.getByTestId('copy-as-json').click();
 		expect(JSON.parse(await page.evaluate(() => navigator.clipboard.readText()))).toHaveLength(2);
 
 		expect(JSON.parse(await page.evaluate(() => navigator.clipboard.readText()))[0]).toEqual({
@@ -571,8 +573,10 @@ test.describe('Session interaction', () => {
 		// Attempt to navigate away again
 		await page.getByText('Settings', { exact: true }).click();
 
-		// Check that we've navigated to the settings page
-		await expect(page.getByText('Automatically check for updates')).toBeVisible();
+		// Check that we've navigated to the settings page. Assert a settings
+		// element present in this build — the auto-update checkbox was removed for
+		// privacy (see version.test.ts) — plus the URL.
+		await expect(page.getByText('Current version')).toBeVisible();
 		expect(page.url()).toContain('/settings');
 
 		// Check that the completion has stopped
@@ -596,12 +600,21 @@ test.describe('Session interaction', () => {
 		await expect(promptTextarea).toHaveValue('This is an unsaved prompt');
 		expect(page.url()).toContain('/sessions/');
 
-		// Now verify that navigating outside /sessions/ does trigger a dialog
-		const dialogPromise = page.waitForEvent('dialog');
+		// Now verify that navigating outside /sessions/ triggers a dialog. Handle it
+		// inline with a persistent handler (dismissing so navigation is canceled) —
+		// registering before the click avoids the deadlock of awaiting the click
+		// while the dialog is still open. The confirm() fires in the microtask that
+		// SvelteKit runs the navigation on (after click() resolves), so poll for
+		// the captured message rather than asserting it synchronously.
+		let dialogMessage = '';
+		page.on('dialog', async (dialog) => {
+			dialogMessage = dialog.message();
+			await dialog.dismiss();
+		});
 		await page.getByText('Settings', { exact: true }).click();
-		const dialog = await dialogPromise;
-		expect(dialog.message()).toContain('You have unsaved changes that will be lost');
-		await dialog.dismiss();
+		await expect
+			.poll(() => dialogMessage)
+			.toContain('You have unsaved changes that will be lost');
 
 		// Verify we're still on the session page (navigation was canceled)
 		await expect(promptTextarea).toHaveValue('This is an unsaved prompt');

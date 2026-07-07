@@ -1,37 +1,20 @@
 <script lang="ts">
 	import { Files } from 'lucide-svelte';
-	import { toast } from 'svelte-sonner';
 
 	import LL from '$i18n/i18n-svelte';
+	import { copyToClipboard } from '$lib/clipboard';
 
 	import Button from './Button.svelte';
 
 	export let content: string;
+	export let dataTestid: string | undefined = undefined;
 
 	function copyContent() {
-		if (navigator.clipboard && window.isSecureContext) {
-			navigator.clipboard.writeText(content);
-		} else {
-			// HACK
-			// This is a workaround to copy text content on HTTP connections.
-			// https://developer.mozilla.org/en-US/docs/Web/API/ClipboardItem
-			const textArea = document.createElement('textarea');
-			textArea.value = content;
-			document.body.appendChild(textArea);
-			textArea.select();
-			try {
-				document.execCommand('copy');
-				toast.warning($LL.copiedNotPrivate());
-			} catch (e) {
-				console.error(e);
-				toast.error($LL.notCopiedNotPrivate());
-			}
-			document.body.removeChild(textArea);
-		}
+		copyToClipboard(content);
 	}
 </script>
 
-<div class="copy-button">
+<div class="copy-button" data-testid={dataTestid}>
 	<Button title={$LL.copy()} variant="icon" on:click={copyContent}>
 		<Files class="base-icon" />
 	</Button>
@@ -39,12 +22,13 @@
 
 <style lang="postcss">
 	.copy-button {
-		/* Hiding the button by default because this functionality is not supported on mobile devices */
-		display: none;
-
-		@media (hover: hover) {
-			/* Show the button in devices that support hover (i.e. desktop) */
-			display: unset;
-		}
+		/* Always rendered. Clipboard copy also works without a hover-capable
+		   pointer (see the execCommand fallback in copyContent), so there is no
+		   reason to hide the button when `hover: hover` doesn't match — doing so
+		   previously made the copy button vanish entirely on touchscreens and on
+		   virtual/remote displays (e.g. some Electron setups). Hover-reveal for
+		   per-message/code buttons is handled separately via opacity, which keeps
+		   the desktop declutter without hiding the control from layout. */
+		display: unset;
 	}
 </style>

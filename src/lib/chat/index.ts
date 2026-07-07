@@ -9,7 +9,8 @@ import { type OllamaOptions } from './ollama';
 export interface Message {
 	role: 'user' | 'assistant' | 'system';
 	content: string;
-	images?: string[]; // Optional array of base64 image strings
+	images?: string[];
+	reasoning_content?: string;
 }
 
 export interface ChatRequest {
@@ -17,13 +18,15 @@ export interface ChatRequest {
 	messages: Message[];
 	stream?: boolean;
 	options?: Partial<OllamaOptions>;
+	reasoningEffort?: string;
 }
 
 export interface ChatStrategy {
 	chat(
 		payload: ChatRequest,
 		abortSignal: AbortSignal,
-		onChunk: (content: string) => void
+		onChunk: (content: string) => void,
+		onReasoningChunk?: (content: string) => void
 	): Promise<void>;
 
 	getModels(): Promise<Model[]>;

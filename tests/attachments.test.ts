@@ -1,10 +1,13 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { expect, test, type Locator } from '@playwright/test';
-import type {
-	ChatCompletionContentPart,
-	ChatCompletionMessageParam
-} from 'openai/resources/index.mjs';
+// Minimal local types for the OpenAI vision payload shape. The `openai` package
+// was intentionally removed in the privacy-hardening refactor (openai.ts sends
+// raw fetch through the proxy), so its types are no longer available to import.
+type ChatCompletionContentPart =
+	| { type: 'text'; text: string }
+	| { type: 'image_url'; image_url: { url: string } };
+type ChatCompletionMessageParam = { role: string; content: string | ChatCompletionContentPart[] };
 
 import {
 	chooseFromCombobox,
@@ -91,7 +94,6 @@ test.describe('Attachments', () => {
 		type RequestData = {
 			messages: Array<{
 				role: string;
-				knowledge: (typeof MOCK_KNOWLEDGE)[0];
 				content: string;
 			}>;
 		};
@@ -112,9 +114,11 @@ test.describe('Attachments', () => {
 		await page.getByText('Run').click();
 
 		// Verify request includes knowledge context
+		// Knowledge is injected into the message CONTENT as a <CONTEXT> block; it
+		// is no longer sent as a separate `knowledge` metadata field on the wire
+		// (the payload mapper allowlists role/content/images only).
 		expect(requestData?.messages[0]).toMatchObject({
 			role: 'user',
-			knowledge: MOCK_KNOWLEDGE[0],
 			content: `
 <CONTEXT>
 	<CONTEXT_NAME>${MOCK_KNOWLEDGE[0].name}</CONTEXT_NAME>
@@ -492,10 +496,12 @@ test.describe('Attachments', () => {
 		]);
 		await fileChooser.setFiles(testImagePath);
 
-		// Intercept outgoing request to OpenAI chat completions endpoint
+		// Intercept the outgoing chat request. OpenAI-family calls now go through
+		// the same-origin proxy (/api/chat), not the upstream /chat/completions —
+		// the vision content array is built in-browser and sent inside that body.
 		// Use a partial type for the overall payload as the library might not export a full request body type
 		let requestPayload: { messages: ChatCompletionMessageParam[] } | undefined = undefined;
-		await page.route('**/chat/completions', async (route, request) => {
+		await page.route('**/api/chat', async (route, request) => {
 			const postData = request.postData();
 			if (postData)
 				requestPayload = JSON.parse(postData) as { messages: ChatCompletionMessageParam[] };
@@ -540,7 +546,11 @@ test.describe('Attachments', () => {
 			(part: ChatCompletionContentPart) => part.type === 'image_url'
 		);
 		expect(textPart).toBeTruthy();
-		expect(textPart?.text).toContain('Describe this image');
+		// Type guard (mirrors the image_url one below) so `.text` narrows.
+		if (textPart?.type !== 'text') {
+			throw new Error('Text part is not of type text');
+		}
+		expect(textPart.text).toContain('Describe this image');
 		expect(imagePart).toBeTruthy();
 		// Need type guard for image_url part
 		if (imagePart?.type !== 'image_url') {
