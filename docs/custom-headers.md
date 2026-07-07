@@ -2,6 +2,8 @@
 
 Operators can configure extra HTTP headers that the proxy sends to upstream API providers. This supports providers that require custom authentication headers, request routing, or tracing.
 
+![Fireworks connection config showing custom headers and session affinity](screenshots/settings-fireworks.png)
+
 ## How it works
 
 1. User enters headers in the ExtraHeaders UI component on the Settings → Connection page
