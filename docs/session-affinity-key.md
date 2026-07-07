@@ -2,6 +2,8 @@
 
 The session affinity key enables Fireworks AI prompt caching by sending a `prompt_cache_key` parameter with chat completion requests. This routes requests with the same key to the same cache slot, so the system prompt and conversation prefix are cached and reused across turns.
 
+![Fireworks connection config with session affinity key and custom headers](screenshots/settings-fireworks.png)
+
 ## How it works
 
 1. User sets a session affinity key in Settings → Connection (OpenAI-Compatible only)
