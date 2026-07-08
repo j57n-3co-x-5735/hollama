@@ -13,6 +13,6 @@ vite.config.ts.timestamp-*
 /test-results
 /ai/models
 /sessions/*.json
-/.hollama
+**/.hollama
 /tests/.tmp-data-web
 /tests-desktop/.tmp-data
